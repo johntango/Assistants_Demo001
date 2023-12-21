@@ -1,1 +1,1 @@
-This will create an Assistant called MathTutor
+This will create an Assistant for experiments
