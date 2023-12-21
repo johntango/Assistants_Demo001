@@ -2,7 +2,7 @@
 const express =require('express');
 const path = require('path');
 const app = express();
-const port = 3001;
+const port = 3000;
 const fs = require('fs');
 const axios = require('axios');
 const OpenAI = require( 'openai');
@@ -25,8 +25,8 @@ app.get('/', (req, res) => {
 });
 
 // Define routes
-app.post('/create', (req, res) => {
-    console.log('Create request received:', req.body);
+app.post('/create', async(req, res) => {
+    console.log('Create request received:', JSON.stringify(req.body));
     res.json({ message: 'Create action performed' });
 });
 
@@ -84,13 +84,7 @@ app.post('/cancelrun', (req, res) => {
     console.log('Cancel Run request received:', req.body);
     res.json({ message: 'Cancel Run action performed' });
 });
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-});
-
-
+/*
 app.post('/prompt', async (req, res) => {
     // get the values from the request 
     console.log(JSON.stringify(req.body));
@@ -161,7 +155,7 @@ app.get('/test-key', async (req, res) => {
         return console.error('Error:', error);
     }
 });
-
+*/
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

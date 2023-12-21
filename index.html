@@ -2,18 +2,23 @@
 <html>
   <head>
     <title>One Shot Prompting</title>
-    <script type="module">
+    <script>
       function sendRequest(route) {
+        console.log(`sending message to ${route}`);
+        let data = { message: `Button clicked for ${route}` };
         fetch(`http://localhost:3000/${route}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ message: `Button clicked for ${route}` }),
+          body: JSON.stringify(data),
+          mode: "cors",
         })
-          .then((response) => response.json())
-          .then((data) => console.log(data))
-          .then((document.getElementById("response").innerHTML = text))
+          .then((response) => response.text())
+          .then((text) => {
+            console.log(text);
+            document.getElementById("response").innerHTML = text;
+          })
           .catch((error) => console.error("Error:", error));
       }
     </script>
