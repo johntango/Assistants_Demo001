@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>One Shot Prompting</title>
+    <script type="module">
+      function sendRequest(route) {
+        fetch(`http://localhost:3000/${route}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: `Button clicked for ${route}` }),
+        })
+          .then((response) => response.json())
+          .then((data) => console.log(data))
+          .then((document.getElementById("response").innerHTML = text))
+          .catch((error) => console.error("Error:", error));
+      }
+    </script>
+    <style>
+      div {
+        white-space: pre-wrap;
+        white-space: -moz-pre-wrap;
+        white-space: -pre-wrap;
+        white-space: -o-pre-wrap;
+        word-wrap: break-word;
+        color: blue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="assistant">
+      <label for="assistant_name">Assistant Name:</label>
+      <button onclick="sendRequest('create')">Create</button>
+      <button onclick="sendRequest('modify')">Modify</button>
+      <button onclick="sendRequest('list')">List</button>
+      <button onclick="sendRequest('delete')">Delete</button>
+    </div>
+
+    <div id="assistant_file">
+      <label for="assistant_file">Assistant File:</label>
+      <button onclick="sendRequest('uploadfile')">Upload</button>
+      <button onclick="sendRequest('createfile')">Create</button>
+      <button onclick="sendRequest('listfiles')">List</button>
+      <button onclick="sendRequest('deletefile')">Delete</button>
+    </div>
+
+    <div id="thread">
+      <label for="thread">Thread:</label>
+      <button onclick="sendRequest('createthread')">Create</button>
+      <button onclick="sendRequest('deletethread')">Delete</button>
+    </div>
+
+    <div id="run">
+      <label for="run">Run:</label>
+      <button onclick="sendRequest('createrun')">Create</button>
+      <button onclick="sendRequest('cancelrun')">Cancel</button>
+    </div>
+    <div id="response">
+      <label for="response">Response from GPT:</label>
+    </div>
+  </body>
+</html>
