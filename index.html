@@ -6,7 +6,7 @@
       function sendRequest(route) {
         console.log(`sending message to ${route}`);
         let data = { message: `Button clicked for ${route}` };
-        fetch(`http://localhost:3000/${route}`, {
+        fetch(`/${route}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
