@@ -25,62 +25,103 @@ app.get('/', (req, res) => {
 });
 
 // Define routes
-app.post('/create', async(req, res) => {
-    console.log('Create request received:', JSON.stringify(req.body));
-    res.json({ message: 'Create action performed' });
-});
+app.post('/create_assistant', async(req, res) => {
+    try {
+        const assistant = await openai.beta.assistants.create({
+          name: "Test Assistant",
+          instructions:
+            "You are a personal share price tutor. Write and run code to answer financial questions.",
+          tools: [{ type: "code_interpreter" },{type: "retrieval"}],
+          model: "gpt-4-1106-preview",
+        });
+    
+        // Log the first greeting
+        console.log(
+          "\nHello there, I'm your personal share price tutor. Ask some questions.\n"
+        );
+        res.json({ message: 'Assistant Created with ID: '+assistant.id });
+        }
+    catch (error) {
+        return console.error('Error:', error);
+    }
+}   
+);
 
-app.post('/modify', (req, res) => {
+app.post('/modify_assistant', (req, res) => {
     console.log('Modify request received:', req.body);
     res.json({ message: 'Modify action performed' });
 });
 
-app.post('/list', (req, res) => {
-    console.log('List request received:', req.body);
-    res.json({ message: 'List action performed' });
+app.post('/list_assistants', async(req, res) => {
+    try {
+        const response = await openai.beta.assistants.list({
+          order: "desc",
+          limit:10,
+        }).then((response) => {
+            console.log(response.data);
+            console.log("response sent")
+            res.json(response.data);
+        }
+        );
+        }
+    catch (error) { 
+        return console.error('Error:', error);
+    }
+})  
+
+
+app.post('/delete_assistant', async(req, res) => {
+    try {
+        let assistant_id = req.body.assistant_id;
+        const response = await openai.beta.assistants.del(assistant_id);
+    
+        // Log the first greeting
+        console.log(
+          `deleted assistant ${response.data}.\n`
+        );
+        res.json({ message: response.data});
+        }
+    catch (error) {
+        return console.error('Error:', error);
+    }
 });
 
-app.post('/delete', (req, res) => {
-    console.log('Delete request received:', req.body);
-    res.json({ message: 'Delete action performed' });
-});
-
-app.post('/uploadfile', (req, res) => {
+app.post('/upload_file', async(req, res) => {
     console.log('Upload request received:', req.body);
     res.json({ message: 'Upload action performed' });
 });
 
-app.post('/createfile', (req, res) => {
+app.post('/create_file', async(req, res) => {
     console.log('Create File request received:', req.body);
     res.json({ message: 'Create File action performed' });
 });
 
-app.post('/listfiles', (req, res) => {
+app.post('/list_files', async(req, res) => {
     console.log('List Files request received:', req.body);
     res.json({ message: 'List Files action performed' });
 });
 
-app.post('/deletefile', (req, res) => {
+app.post('/delete_file', async(req, res) => {
     console.log('Delete File request received:', req.body);
     res.json({ message: 'Delete File action performed' });
 });
 
-app.post('/createthread', (req, res) => {
+app.post('/create_thread', async(req, res) => {
     console.log('Create Thread request received:', req.body);
     res.json({ message: 'Create Thread action performed' });
 });
 
-app.post('/deletethread', (req, res) => {
+app.post('/delete_thread', async(req, res) => {
     console.log('Delete Thread request received:', req.body);
     res.json({ message: 'Delete Thread action performed' });
 });
 
-app.post('/createrun', (req, res) => {
+app.post('/create_run', (req, res) => {
     console.log('Create Run request received:', req.body);
     res.json({ message: 'Create Run action performed' });
 });
 
-app.post('/cancelrun', (req, res) => {
+app.post('/delete_run', (req, res) => {
     console.log('Cancel Run request received:', req.body);
     res.json({ message: 'Cancel Run action performed' });
 });
