@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
 // Define routes
 app.post('/create_assistant', async(req, res) => {
     try {
-        const response = await openai.beta.assistants.create({
+        let response = await openai.beta.assistants.create({
           name: "Test Assistant",
           instructions:
             "You are a personal share price tutor. Write and run code to answer financial questions.",
@@ -42,9 +42,9 @@ app.post('/create_assistant', async(req, res) => {
         console.log(
           "\nHello there, I'm your personal share price tutor. Ask some questions.\n"
         );
-        focus.assistant_id = response.assistant_id;
-        message = "Assistant created with id: " + response.assistant_id;
-        res.json({message: message}, {focus: focus});
+        focus.assistant_id = await response.id;
+        message = "Assistant created with id: " + response.id;
+        res.json({message: message, focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);
@@ -83,16 +83,17 @@ function extract_assistant_id(data) {
 
 app.post('/delete_assistant', async(req, res) => {
     try {
-        let assistant_id = req.body.data.assistant_id;
+        let assistant_id = req.body.assistant_id;
+        console.log("Deleting assistant_id: " + assistant_id);
         const response = await openai.beta.assistants.del(assistant_id);
     
         // Log the first greeting
         console.log(
-          `deleted assistant ${response.data}.\n`
+          `deleted assistant ${JSON.stringify(response)}.\n`
         );
         message = "Assistant deleted with id: " + assistant_id;
         focus.assistant_id = "";
-        res.json({message: message}, {focus: focus});
+        res.json({message: message, focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);

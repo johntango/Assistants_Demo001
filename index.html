@@ -3,20 +3,34 @@
   <head>
     <title>One Shot Prompting</title>
     <script>
+      let data = {
+        assistant_id: "",
+        file_id: "",
+        thread_id: "",
+        run_id: "",
+      };
+      function get_data_from_elements() {
+        data.assistant_id = document.getElementById("assistant_id").value;
+        data.file_id = document.getElementById("file_id").value;
+        data.thread_id = document.getElementById("thread_id").value;
+        data.run_id = document.getElementById("run_id").value;
+      }
+      function write_data_to_elements(data) {
+        document.getElementById("assistant_id").value = data.assistant_id;
+        document.getElementById("file_id").value = data.file_id;
+        document.getElementById("thread_id").value = data.thread_id;
+        document.getElementById("run_id").value = data.run_id;
+      }
+
+      function write_to_div(route, message) {
+        console.log(`IN write to div `);
+        console.log(`message in Write to Div: ${JSON.stringify(message)}`);
+        let div = document.getElementById("response");
+        div.innerHTML = JSON.stringify(message);
+      }
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
-        let assistantId = document.getElementById("assistant_id").value;
-        let fileId = document.getElementById("file_id").value;
-        let threadId = document.getElementById("thread_id").value;
-        let runId = document.getElementById("run_id").value;
-
-        let data = {
-          assistantId: assistantId,
-          fileId: fileId,
-          threadId: threadId,
-          runId: runId,
-        };
-
+        get_data_from_elements();
         let response = await fetch(`/${route}`, {
           method: "POST",
           headers: {
@@ -29,19 +43,11 @@
 
         // this is json response from server
         let message = res.message;
-        data = res.focus;
-
+        write_data_to_elements(res.focus);
         console.log(`message: ${message}`);
-        console.log(`focus: ${focus}`);
-        extract_focus(data);
-        write_to_div(route, message);
-      }
+        console.log(`focus: ${JSON.stringify(data)}`);
 
-      function write_to_div(route, message) {
-        console.log(`IN write to div `);
-        console.log(`message in Write to Div: ${JSON.stringify(message)}`);
-        let div = document.getElementById("response");
-        div.innerHTML = JSON.stringify(message);
+        write_to_div(route, message);
       }
     </script>
     <style>
