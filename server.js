@@ -13,6 +13,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
+// Define global variables focus to keep track of the assistant, file, thread and run
+let focus = {assistant_id: "", file_id: "", thread_id: "", run_id: ""};
+
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
 
@@ -27,7 +30,7 @@ app.get('/', (req, res) => {
 // Define routes
 app.post('/create_assistant', async(req, res) => {
     try {
-        const assistant = await openai.beta.assistants.create({
+        const response = await openai.beta.assistants.create({
           name: "Test Assistant",
           instructions:
             "You are a personal share price tutor. Write and run code to answer financial questions.",
@@ -39,7 +42,9 @@ app.post('/create_assistant', async(req, res) => {
         console.log(
           "\nHello there, I'm your personal share price tutor. Ask some questions.\n"
         );
-        res.json({ message: 'Assistant Created with ID: '+assistant.id });
+        focus.assistant_id = response.assistant_id;
+        message = "Assistant created with id: " + response.assistant_id;
+        res.json({message: message}, {focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);
@@ -52,34 +57,42 @@ app.post('/modify_assistant', (req, res) => {
     res.json({ message: 'Modify action performed' });
 });
 
+// this lists out all the assistants and extracts the latest assistant id and stores it in focus
 app.post('/list_assistants', async(req, res) => {
     try {
         const response = await openai.beta.assistants.list({
           order: "desc",
           limit:10,
-        }).then((response) => {
-            console.log(response.data);
-            console.log("response sent")
-            res.json(response.data);
-        }
-        );
+        })
+        console.log(`list of assistants ${JSON.stringify(response.data)}`);
+        focus.assistant_id = extract_assistant_id(response.data);
+        let message = JSON.stringify(response.data);
+        res.json({message:message, focus: focus});
         }
     catch (error) { 
         return console.error('Error:', error);
     }
 })  
+function extract_assistant_id(data) {
+    let assistant_id = "";
+    if (data.length > 0) assistant_id = data[0].id;
+    console.log("got assistant_id: " + assistant_id);
+    return assistant_id;
+}
 
 
 app.post('/delete_assistant', async(req, res) => {
     try {
-        let assistant_id = req.body.assistant_id;
+        let assistant_id = req.body.data.assistant_id;
         const response = await openai.beta.assistants.del(assistant_id);
     
         // Log the first greeting
         console.log(
           `deleted assistant ${response.data}.\n`
         );
-        res.json({ message: response.data});
+        message = "Assistant deleted with id: " + assistant_id;
+        focus.assistant_id = "";
+        res.json({message: message}, {focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);

@@ -3,30 +3,45 @@
   <head>
     <title>One Shot Prompting</title>
     <script>
-      function sendRequest(route) {
+      async function sendRequest(route) {
         console.log(`sending message to ${route}`);
-        let data = { message: `Button clicked for ${route}` };
-        fetch(`/${route}`, {
+        let assistantId = document.getElementById("assistant_id").value;
+        let fileId = document.getElementById("file_id").value;
+        let threadId = document.getElementById("thread_id").value;
+        let runId = document.getElementById("run_id").value;
+
+        let data = {
+          assistantId: assistantId,
+          fileId: fileId,
+          threadId: threadId,
+          runId: runId,
+        };
+
+        let response = await fetch(`/${route}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
           mode: "cors",
-        }).then((response) => {
-          console.log(`response: ${response}`);
-          response.json().then((json) => {
-            console.log(`json: ${JSON.stringify(json)}`);
-            write_to_div(route, JSON.stringify(json));
-          });
         });
+        let res = await response.json();
+
+        // this is json response from server
+        let message = res.message;
+        data = res.focus;
+
+        console.log(`message: ${message}`);
+        console.log(`focus: ${focus}`);
+        extract_focus(data);
+        write_to_div(route, message);
       }
 
-      function write_to_div(route, json) {
+      function write_to_div(route, message) {
         console.log(`IN write to div `);
-        console.log(`message in Write to Div: ${json}`);
+        console.log(`message in Write to Div: ${JSON.stringify(message)}`);
         let div = document.getElementById("response");
-        div.innerHTML = JSON.stringify(json);
+        div.innerHTML = JSON.stringify(message);
       }
     </script>
     <style>
@@ -42,17 +57,17 @@
   </head>
   <body>
     <div id="assistant">
-      <label for="assistant_name">Assistant Name:</label>
+      <label for="assistant_id">Assistant ID:</label>
+      <input type="text" id="assistant_id" name="assistant_id" />
       <button onclick="sendRequest('create_assistant')">Create</button>
-      <input type="text" id="create_assistant" name="assistant_name" />
       <button onclick="sendRequest('modify_assistant')">Modify</button>
       <button onclick="sendRequest('list_assistants')">List</button>
-      <input type="text" id="list_assistants" name="list_assistants" />
       <button onclick="sendRequest('delete_assistant')">Delete</button>
     </div>
 
     <div id="assistant_file">
-      <label for="assistant_file">Assistant File:</label>
+      <label for="file_id">File ID:</label>
+      <input type="text" id="file_id" name="file_id" />
       <button onclick="sendRequest('upload_file')">Upload</button>
       <button onclick="sendRequest('create_file')">Create</button>
       <button onclick="sendRequest('list_files')">List</button>
@@ -60,13 +75,15 @@
     </div>
 
     <div id="thread">
-      <label for="thread">Thread:</label>
+      <label for="thread_id">Thread ID:</label>
+      <input type="text" id="thread_id" name="thread_id" />
       <button onclick="sendRequest('create_thread')">Create</button>
       <button onclick="sendRequest('delete_thread')">Delete</button>
     </div>
 
     <div id="run">
-      <label for="run">Run:</label>
+      <label for="run_id">Run ID:</label>
+      <input type="text" id="run_id" name="run_id" />
       <button onclick="sendRequest('create_run')">Create</button>
       <button onclick="sendRequest('delete_run')">Cancel</button>
     </div>
