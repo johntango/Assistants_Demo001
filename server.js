@@ -101,17 +101,19 @@ app.post('/delete_assistant', async(req, res) => {
 });
 
 app.post('/upload_file', async(req, res) => {
-    let data = res.body.data;
-    let file = data.file_id;  // this is the file name 
+    focus = req.body;
+    let file = focus.file_id;  // this is the file name 
+    let assistant_id = focus.assistant_id;
     if(!file) { 
         return res.status(400).send('No files were uploaded.'); 
     }
     try {
-        let filestream = fs.createReadStream('FileSystem');
+        let filestream = fs.createReadStream(file);
 
         let response = await openai.files.create({
             file: filestream,
-            purpose: "assistant"}
+            purpose: "assistants"
+        }
         )
         message = "Assistant deleted with id: " + response.id;
         focus.file_id = response.id;

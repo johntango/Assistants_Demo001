@@ -30,15 +30,12 @@
       }
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
-        if (route == "file_upload") {
-          let file = document.getElementById("file_id").value;
-          data.file_id = file;
+        if (route == "upload_file") {
+          get_data_from_elements();
+          console.log(JSON.stringify(data));
         }
         if (route == "create_file") {
-          let file = document.getElementById("file_id").value;
-          let assistant_id = document.getElementById("assistant_id").value;
-          data.file_id = file;
-          data.assistant_id = assistant_id;
+          get_data_from_elements
         }
 
         let response = await fetch(`/${route}`, {
