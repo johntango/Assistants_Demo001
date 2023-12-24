@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>One Shot Prompting</title>
+    <title>Managoing Assistants</title>
     <script>
       let data = {
         assistant_id: "",
@@ -30,7 +30,17 @@
       }
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
-        get_data_from_elements();
+        if (route == "file_upload") {
+          let file = document.getElementById("file_id").value;
+          data.file_id = file;
+        }
+        if (route == "create_file") {
+          let file = document.getElementById("file_id").value;
+          let assistant_id = document.getElementById("assistant_id").value;
+          data.file_id = file;
+          data.assistant_id = assistant_id;
+        }
+
         let response = await fetch(`/${route}`, {
           method: "POST",
           headers: {
@@ -40,14 +50,70 @@
           mode: "cors",
         });
         let res = await response.json();
-
-        // this is json response from server
-        let message = res.message;
-        write_data_to_elements(res.focus);
-        console.log(`message: ${message}`);
-        console.log(`focus: ${JSON.stringify(data)}`);
-
-        write_to_div(route, message);
+        parse_response(route, res);
+        return;
+      }
+      function parse_response(route, response) {
+        if (route == "create_assistant") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "modify_assistant") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "list_assistants") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "delete_assistant") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "upload_file") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "create_file") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "list_files") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "delete_file") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "create_thread") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "delete_thread") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "create_run") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "delete_run") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
       }
     </script>
     <style>

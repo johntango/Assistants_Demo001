@@ -101,18 +101,66 @@ app.post('/delete_assistant', async(req, res) => {
 });
 
 app.post('/upload_file', async(req, res) => {
-    console.log('Upload request received:', req.body);
-    res.json({ message: 'Upload action performed' });
+    let data = res.body.data;
+    let file = data.file_id;  // this is the file name 
+    if(!file) { 
+        return res.status(400).send('No files were uploaded.'); 
+    }
+    try {
+        let filestream = fs.createReadStream('FileSystem');
+
+        let response = await openai.files.create({
+            file: filestream,
+            purpose: "assistant"}
+        )
+        message = "Assistant deleted with id: " + response.id;
+        focus.file_id = response.id;
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Upload action failed' });
+            }
 });
 
 app.post('/create_file', async(req, res) => {
-    console.log('Create File request received:', req.body);
-    res.json({ message: 'Create File action performed' });
+    let data = res.body.data;
+    assistant_id = data.assistant_id;
+    file_id = data.file_id;  // this is the file id
+    try {
+        let response = await openai.beta.assistants.files.create(
+            assistant_id,
+            {
+            file: file_id
+            }
+        )
+        message = "File Attached to assistant: " + response;
+        focus.file_id = response.id;
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Create File action failed' });
+            }
 });
 
+
+
 app.post('/list_files', async(req, res) => {
-    console.log('List Files request received:', req.body);
-    res.json({ message: 'List Files action performed' });
+    let data = res.body.data;
+    assistant_id = data.assistant_id;
+    try {
+        let response = await openai.beta.assistants.files.list(
+            assistant_id
+        )
+        message = response;
+    
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'List files action failed' });
+            }
 });
 
 app.post('/delete_file', async(req, res) => {
