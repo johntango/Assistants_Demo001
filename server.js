@@ -151,13 +151,15 @@ app.post('/create_file', async(req, res) => {
 
 app.post('/list_files', async(req, res) => {
     let data = req.body;
-    assistant_id = data.assistant_id;
+    let assistant_id = data.assistant_id;
     try {
         let response = await openai.beta.assistants.files.list(
             assistant_id
         )
         message = response;
-    
+        console.log("list_files response: " + JSON.stringify(response));
+        focus.file_id = response.data[0].id;
+        
         res.status(200).json({message: message, focus: focus});
     }
     catch(error) {
@@ -167,8 +169,22 @@ app.post('/list_files', async(req, res) => {
 });
 
 app.post('/delete_file', async(req, res) => {
-    console.log('Delete File request received:', req.body);
-    res.json({ message: 'Delete File action performed' });
+    let data = req.body;
+    let assistant_id = data.assistant_id;
+    let file_id = data.file_id;
+    try {
+        let response = await openai.beta.assistants.files.del(
+            assistant_id,
+            file_id
+        )
+        message = response;
+    
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'List files action failed' });
+            }
 });
 
 app.post('/create_thread', async(req, res) => {
