@@ -8,18 +8,24 @@
         file_id: "",
         thread_id: "",
         run_id: "",
+        message: "",
+        run_status: "",
       };
       function get_data_from_elements() {
         data.assistant_id = document.getElementById("assistant_id").value;
         data.file_id = document.getElementById("file_id").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.run_id = document.getElementById("run_id").value;
+        data.message = document.getElementById("message").value;
+        data.status = document.getElementById("run_status").value;
       }
       function write_data_to_elements(data) {
         document.getElementById("assistant_id").value = data.assistant_id;
         document.getElementById("file_id").value = data.file_id;
         document.getElementById("thread_id").value = data.thread_id;
         document.getElementById("run_id").value = data.run_id;
+        document.getElementById("message").value = data.message;
+        document.getElementById("run_status").value = data.status;
       }
 
       function write_to_div(route, message) {
@@ -35,6 +41,9 @@
           console.log(JSON.stringify(data));
         }
         if (route == "create_file") {
+          get_data_from_elements;
+        }
+        if (route == "create_message") {
           get_data_from_elements;
         }
 
@@ -113,9 +122,22 @@
           write_data_to_elements(data);
           write_to_div(route, response.message);
         }
+        if (route == "run_status") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
+        if (route == "create_message") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
       }
     </script>
     <style>
+      .button-container {
+        display: flex;
+      }
       div {
         white-space: pre-wrap;
         white-space: -moz-pre-wrap;
@@ -127,7 +149,7 @@
     </style>
   </head>
   <body>
-    <div id="assistant">
+    <div id="assistant" class="button-container">
       <label for="assistant_id">Assistant ID:</label>
       <input type="text" id="assistant_id" name="assistant_id" />
       <button onclick="sendRequest('create_assistant')">Create</button>
@@ -136,7 +158,7 @@
       <button onclick="sendRequest('delete_assistant')">Delete</button>
     </div>
 
-    <div id="assistant_file">
+    <div id="assistant_file" class="button-container">
       <label for="file_id">File ID:</label>
       <input type="text" id="file_id" name="file_id" />
       <button onclick="sendRequest('upload_file')">Upload</button>
@@ -145,19 +167,27 @@
       <button onclick="sendRequest('delete_file')">Delete</button>
     </div>
 
-    <div id="thread">
+    <div id="thread" class="button-container">
       <label for="thread_id">Thread ID:</label>
       <input type="text" id="thread_id" name="thread_id" />
       <button onclick="sendRequest('create_thread')">Create</button>
       <button onclick="sendRequest('delete_thread')">Delete</button>
     </div>
 
-    <div id="run">
+    <div id="run" class="button-container">
       <label for="run_id">Run ID:</label>
       <input type="text" id="run_id" name="run_id" />
+      <input type="text" id="run_status" name="run_status" />
       <button onclick="sendRequest('create_run')">Create</button>
       <button onclick="sendRequest('delete_run')">Cancel</button>
+      <button onclick="sendRequest('run_status')">Get Status</button>
     </div>
+    <div id="message" class="button-container">
+      <label for="message">Create Message:</label>
+      <input type="text" id="message" name="message" />
+      <button onclick="sendRequest('create_message')">Create Message</button>
+    </div>
+
     <div id="response">
       <label for="response">Response from GPT:</label>
     </div>

@@ -14,7 +14,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // Define global variables focus to keep track of the assistant, file, thread and run
-let focus = {assistant_id: "", file_id: "", thread_id: "", run_id: ""};
+let focus = {assistant_id: "", file_id: "", thread_id: "", message: "", run_id: ""};
 
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
@@ -188,24 +188,112 @@ app.post('/delete_file', async(req, res) => {
 });
 
 app.post('/create_thread', async(req, res) => {
-    console.log('Create Thread request received:', req.body);
-    res.json({ message: 'Create Thread action performed' });
-});
+    let assistant_id = req.body.assistant_id;
+    try {
+        let response = await openai.beta.threads.create(
+            /*messages=[
+            {
+              "role": "user",
+              "content": "Create data visualization based on the trends in this file.",
+              "file_ids": [focus.file_id]
+            }
+          ]*/
+          )
+
+        message = response;
+        console.log("create_thread response: " + JSON.stringify(response));
+        focus.thread_id = response.id;
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Thread Create failed' });
+            }
+    });
 
 app.post('/delete_thread', async(req, res) => {
-    console.log('Delete Thread request received:', req.body);
-    res.json({ message: 'Delete Thread action performed' });
-});
+    let thread_id = req.body.thread_id;
+    try {
+        let response = await openai.beta.threads.del(thread_id)
+        message = "Thread deleted with id: " + response.id;
+        focus.thread_id = ""
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Thread Delete failed' });
+            }
+    });
 
-app.post('/create_run', (req, res) => {
-    console.log('Create Run request received:', req.body);
-    res.json({ message: 'Create Run action performed' });
-});
+app.post('/create_run', async(req, res) => {
+    let thread_id = req.body.thread_id;
+    let assistant_id = req.body.assistant_id;
+    console.log("create_run thread_id: " + thread_id + " assistant_id: " + assistant_id);
+    try {
+        let response = await openai.beta.threads.runs.create(thread_id,{
+            assistant_id: assistant_id
+        })
+        message = response;
+        focus.run_id = response.id;
+        console.log("create_run response: " + JSON.stringify(response));
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Run Delete failed' });
+            }
+    });
 
-app.post('/delete_run', (req, res) => {
-    console.log('Cancel Run request received:', req.body);
-    res.json({ message: 'Cancel Run action performed' });
+    // we need to fix this to write status in to focus 
+app.post('/run_status', async(req, res) => {
+let thread_id = req.body.thread_id;
+let run_id = req.body.run_id;
+try {
+    let response = await openai.beta.threads.runs.retrieve(thread_id,run_id)
+    message = response;
+    focus.status = response.status;
+    console.log("run status response: " + JSON.stringify(response));
+    res.status(200).json({message: response, focus: focus});
+}
+catch(error) {
+            console.log(error);
+            res.status(500).json({ message: 'Run Delete failed' });
+        }
 });
+app.post('/delete_run', async(req, res) => {
+let thread_id = req.body.thread_id;
+let assistant_id = req.body.assistant_id;
+let run_id = req.body.run_id;
+try {
+    let response = await openai.beta.threads.runs.cancel(thread_id,run_id)
+    message = response;
+    focus.run_id = response.id;
+    res.status(200).json({message: message, focus: focus});
+}
+catch(error) {
+            console.log(error);
+            res.status(500).json({ message: 'Run Delete failed' });
+        }
+});
+app.post('/create_message', async(req, res) => {
+    let m = req.body.message;
+    let thread_id = req.body.thread_id;
+    console.log("create_message: " + m + " thread_id: " + thread_id);
+    try {
+        let response = await openai.beta.threads.messages.create(thread_id,
+            {
+            role:"user",
+            content: m,
+        })
+        message = response;
+        console.log("create message response: " + JSON.stringify(response));
+        res.status(200).json({message: message, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Run Delete failed' });
+            }
+    });
 /*
 app.post('/prompt', async (req, res) => {
     // get the values from the request 
