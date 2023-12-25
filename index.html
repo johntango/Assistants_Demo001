@@ -35,7 +35,7 @@
           console.log(JSON.stringify(data));
         }
         if (route == "create_file") {
-          get_data_from_elements
+          get_data_from_elements;
         }
 
         let response = await fetch(`/${route}`, {
@@ -74,11 +74,13 @@
         if (route == "upload_file") {
           data = response.focus;
           write_data_to_elements(data);
+          console.log(`data in upload_file: ${JSON.stringify(data)}`);
           write_to_div(route, response.message);
         }
         if (route == "create_file") {
           data = response.focus;
           write_data_to_elements(data);
+          console.log(`data in create_file: ${JSON.stringify(data)}`);
           write_to_div(route, response.message);
         }
         if (route == "list_files") {

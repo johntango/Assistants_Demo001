@@ -103,7 +103,6 @@ app.post('/delete_assistant', async(req, res) => {
 app.post('/upload_file', async(req, res) => {
     focus = req.body;
     let file = focus.file_id;  // this is the file name 
-    let assistant_id = focus.assistant_id;
     if(!file) { 
         return res.status(400).send('No files were uploaded.'); 
     }
@@ -115,9 +114,9 @@ app.post('/upload_file', async(req, res) => {
             purpose: "assistants"
         }
         )
-        message = "Assistant deleted with id: " + response.id;
+        message = "File Uploaded with id: " + response.id;
         focus.file_id = response.id;
-        res.status(200).json({message: message, focus: focus});
+        res.json({message: message, focus: focus});
     }
     catch(error) {
                 console.log(error);
@@ -126,19 +125,21 @@ app.post('/upload_file', async(req, res) => {
 });
 
 app.post('/create_file', async(req, res) => {
-    let data = res.body.data;
-    assistant_id = data.assistant_id;
-    file_id = data.file_id;  // this is the file id
+    let data = req.body;
+    // get the assistant id from the request as a string
+    let assistant_id = data.assistant_id;
+    let file_id = data.file_id;  // this is the file id
+    console.log("in create_file assistant_id: " + assistant_id + " file_id: " + file_id);
     try {
         let response = await openai.beta.assistants.files.create(
             assistant_id,
             {
-            file: file_id
+                file_id: file_id
             }
         )
-        message = "File Attached to assistant: " + response;
+        message = "File Attached to assistant: " + JSON.stringify(response);
         focus.file_id = response.id;
-        res.status(200).json({message: message, focus: focus});
+        res.json({message: message, focus: focus});
     }
     catch(error) {
                 console.log(error);
@@ -149,7 +150,7 @@ app.post('/create_file', async(req, res) => {
 
 
 app.post('/list_files', async(req, res) => {
-    let data = res.body.data;
+    let data = req.body;
     assistant_id = data.assistant_id;
     try {
         let response = await openai.beta.assistants.files.list(
