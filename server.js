@@ -260,6 +260,8 @@ catch(error) {
             res.status(500).json({ message: 'Run Delete failed' });
         }
 });
+
+
 app.post('/delete_run', async(req, res) => {
 let thread_id = req.body.thread_id;
 let assistant_id = req.body.assistant_id;
@@ -294,78 +296,46 @@ app.post('/create_message', async(req, res) => {
                 res.status(500).json({ message: 'Run Delete failed' });
             }
     });
-/*
-app.post('/prompt', async (req, res) => {
-    // get the values from the request 
-    console.log(JSON.stringify(req.body));
-    const system = req.body.system;
-    const user = req.body.user;
-    const assistant = req.body.assistant;
-    const user2 = req.body.user2;
-    console.log("system: " + system)
-    let m1 = { "role": "system", "content": "" };
-    let m2 = { "role": "user", "content": "" }
-    let m3 = { "role": "assistant", "content": "" }
-    let m4 = { "role": "user", "content": "" }
-    let messages = [];
-    // check if system has one or more characters
-    if (system.length > 0) {
-        m1 = { "role": "system", "content": system };
-        console.log("m1: " + JSON.stringify(m1))
-        messages.push(m1);
-    }
-    if (user.length > 0) {
-        m2 = { "role": "user", "content": user };
-        console.log("m2: " + JSON.stringify(m2))
-        messages.push(m2);
-    }
-    if (assistant.length > 0) {
-        m3 = { "role": "assistant", "content": assistant };
-        console.log("m3: " + JSON.stringify(m3))
-        messages.push(m3);
-    }
-    if (user2.length > 0) {
-        m4 = { "role": "user", "content": user2 };
-        console.log("m4: " + JSON.stringify(m4))
-        messages.push(m4);
-    }
-    try {
-        await openai.chat.completions.create({
-            messages: messages,    // not using m3 at the moment
-            model: "gpt-4",
-        }).then((response) => {
-            console.log(response.choices[0].message);
-            console.log("response sent")
-            res.send(response.choices[0].message.content);
-        });
-    }
-    catch (error) {
-        console.error('Error:', error);
-    }
-});
 
-
-// Test API key
-app.get('/test-key', async (req, res) => {
-    console.log("test-key")
+async function get_run_status(thread_id, run_id) {
     try {
-        console.log("in test-key:" + openai.apiKey)
-        let prompt = "Say hello world in French";
-        await openai.completions.create({
-            model: "text-davinci-003",
-            prompt: prompt,
-            max_tokens: 100,
-            temperature: 0.5,
-        }).then((response) => {
-            console.log(response.choices[0].text);
-            console.log("test-key response sent")
-            res.send(response.choices[0].text);
-        });
-    } catch (error) {
-        return console.error('Error:', error);
+        let intervalId = setInterval(async () => {
+            let response = await openai.beta.threads.runs.retrieve(thread_id,run_id)
+            focus.status = response.status;
+            if (response.status === "completed") {
+                clearInterval(intervalId); // Stop polling when status is complete
+            }
+            console.log("run status response: " + response.status)
+        }, 500); // Poll every 1 second
+        // now get the messages
+        let messages = await openai.beta.threads.messages.list( thread_id )   
+        console.log("get_run_status messages: " + JSON.stringify(messages));
+        return messages;
     }
-});
-*/
+    catch(error) {
+        console.log(error);
+        return error;
+    }
+}
+app.post('/get_messages', async(req, res) => {
+    let thread_id = req.body.thread_id;
+    let run_id = req.body.run_id;
+    console.log("get_messages: on thread_id: " + thread_id);
+    try {
+        let messages = get_run_status(thread_id, run_id);
+        console.log("PRINTING MESSAGES: " );
+        for (let message in messages){
+            console.log(message.content+ "/n")
+        }
+        focus.status = "complete";
+        res.status(200).json({message: messages.content, focus: focus});
+    }
+    catch(error) {
+                console.log(error);
+                res.status(500).json({ message: 'Get messages failed' });
+            }
+    });
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

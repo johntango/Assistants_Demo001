@@ -11,6 +11,7 @@
         message: "",
         run_status: "",
       };
+
       function get_data_from_elements() {
         data.assistant_id = document.getElementById("assistant_id").value;
         data.file_id = document.getElementById("file_id").value;
@@ -33,9 +34,13 @@
         console.log(`message in Write to Div: ${JSON.stringify(message)}`);
         let div = document.getElementById("response");
         div.innerHTML = JSON.stringify(message);
+        if (route == "get_messages") {
+          div.innerHTML = JSON.stringify(message);
+        }
       }
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
+        get_data_from_elements();
         if (route == "upload_file") {
           get_data_from_elements();
           console.log(JSON.stringify(data));
@@ -44,6 +49,9 @@
           get_data_from_elements;
         }
         if (route == "create_message") {
+          get_data_from_elements;
+        }
+        if (route == "create_run") {
           get_data_from_elements;
         }
 
@@ -132,6 +140,11 @@
           write_data_to_elements(data);
           write_to_div(route, response.message);
         }
+        if (route == "get_messages") {
+          data = response.focus;
+          write_data_to_elements(data);
+          write_to_div(route, response.message);
+        }
       }
     </script>
     <style>
@@ -184,8 +197,10 @@
     </div>
     <div id="message" class="button-container">
       <label for="message">Create Message:</label>
-      <input type="text" id="message" name="message" />
+      <input type="text" id="messages" name="messages" />
       <button onclick="sendRequest('create_message')">Create Message</button>
+      <label for="messages">Get Messages:</label>
+      <button onclick="sendRequest('get_messages')">Get Messages</button>
     </div>
 
     <div id="response">
