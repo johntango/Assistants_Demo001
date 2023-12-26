@@ -287,7 +287,7 @@ app.post('/create_message', async(req, res) => {
             role:"user",
             content: m,
         })
-        message = response;
+        message = response;;
         console.log("create message response: " + JSON.stringify(response));
         res.status(200).json({message: message, focus: focus});
     }
@@ -309,7 +309,7 @@ async function get_run_status(thread_id, run_id) {
         }, 500); // Poll every 1 second
         // now get the messages
         let messages = await openai.beta.threads.messages.list( thread_id )   
-        console.log("get_run_status messages: " + JSON.stringify(messages));
+        console.log("get_run_status messages: " + JSON.stringify(messages.data));
         return messages;
     }
     catch(error) {
@@ -322,13 +322,11 @@ app.post('/get_messages', async(req, res) => {
     let run_id = req.body.run_id;
     console.log("get_messages: on thread_id: " + thread_id);
     try {
-        let messages = get_run_status(thread_id, run_id);
+        let messages = await get_run_status(thread_id, run_id);
         console.log("PRINTING MESSAGES: " );
-        for (let message in messages){
-            console.log(message.content+ "/n")
-        }
-        focus.status = "complete";
-        res.status(200).json({message: messages.content, focus: focus});
+        console.log(messages.data[0].content[0].text.value)
+        focus.status = "completed";
+        res.status(200).json({message: messages.data[0].content[0].text.value, focus: focus});
     }
     catch(error) {
                 console.log(error);

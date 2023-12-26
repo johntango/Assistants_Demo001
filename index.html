@@ -41,19 +41,6 @@
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
         get_data_from_elements();
-        if (route == "upload_file") {
-          get_data_from_elements();
-          console.log(JSON.stringify(data));
-        }
-        if (route == "create_file") {
-          get_data_from_elements;
-        }
-        if (route == "create_message") {
-          get_data_from_elements;
-        }
-        if (route == "create_run") {
-          get_data_from_elements;
-        }
 
         let response = await fetch(`/${route}`, {
           method: "POST",
@@ -138,6 +125,7 @@
         if (route == "create_message") {
           data = response.focus;
           write_data_to_elements(data);
+
           write_to_div(route, response.message);
         }
         if (route == "get_messages") {
@@ -197,7 +185,7 @@
     </div>
     <div id="message" class="button-container">
       <label for="message">Create Message:</label>
-      <input type="text" id="messages" name="messages" />
+      <input type="text" id="message" name="message" />
       <button onclick="sendRequest('create_message')">Create Message</button>
       <label for="messages">Get Messages:</label>
       <button onclick="sendRequest('get_messages')">Get Messages</button>
