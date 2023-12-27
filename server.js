@@ -7,6 +7,10 @@ const fs = require('fs');
 const axios = require('axios');
 const OpenAI = require( 'openai');
 const bodyParser = require('body-parser')   // really important otherwise the body of the request is empty
+
+const getWeather = require('./get_weather.js');
+global.getWeather = getWeather;
+
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // get OPENAI_API_KEY from GitHub secrets
@@ -14,7 +18,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // Define global variables focus to keep track of the assistant, file, thread and run
-let focus = {assistant_id: "", file_id: "", thread_id: "", message: "", run_id: ""};
+let focus = {assistant_id: "", file_id: "", thread_id: "", message: "",func_name: "", run_id: "",status: ""};
 
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
@@ -44,7 +48,7 @@ app.post('/create_assistant', async(req, res) => {
         );
         focus.assistant_id = await response.id;
         message = "Assistant created with id: " + response.id;
-        res.json({message: message, focus: focus});
+        res.status(200).json({message: message, focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);
@@ -67,7 +71,7 @@ app.post('/list_assistants', async(req, res) => {
         console.log(`list of assistants ${JSON.stringify(response.data)}`);
         focus.assistant_id = extract_assistant_id(response.data);
         let message = JSON.stringify(response.data);
-        res.json({message:message, focus: focus});
+        res.status(200).json({message:message, focus: focus});
         }
     catch (error) { 
         return console.error('Error:', error);
@@ -93,7 +97,7 @@ app.post('/delete_assistant', async(req, res) => {
         );
         message = "Assistant deleted with id: " + assistant_id;
         focus.assistant_id = "";
-        res.json({message: message, focus: focus});
+        res.status(200).json({message: message, focus: focus});
         }
     catch (error) {
         return console.error('Error:', error);
@@ -116,7 +120,7 @@ app.post('/upload_file', async(req, res) => {
         )
         message = "File Uploaded with id: " + response.id;
         focus.file_id = response.id;
-        res.json({message: message, focus: focus});
+        res.status(200).json({message: message, focus: focus});
     }
     catch(error) {
                 console.log(error);
@@ -139,7 +143,7 @@ app.post('/create_file', async(req, res) => {
         )
         message = "File Attached to assistant: " + JSON.stringify(response);
         focus.file_id = response.id;
-        res.json({message: message, focus: focus});
+        res.status(200).json({message: message, focus: focus});
     }
     catch(error) {
                 console.log(error);
@@ -333,7 +337,74 @@ app.post('/get_messages', async(req, res) => {
                 res.status(500).json({ message: 'Get messages failed' });
             }
     });
-
+app.post('/run_function', async(req, res) => {
+    async function runConversation() {
+        // Step 1: send the conversation and available functions to the model
+        const messages = [
+          { role: "user", content: "What's the weather like in San Francisco, Tokyo, and Paris?" },
+        ];
+        const tools = [
+          {
+            type: "function",
+            function: {
+              name: "get_weather",
+              description: "Get the current weather in a given location",
+              parameters: {
+                type: "object",
+                properties: {
+                  location: {
+                    type: "string",
+                    description: "The city and state, e.g. San Francisco, CA",
+                  },
+                  unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+                },
+                required: ["location"],
+              },
+            },
+          },
+        ];
+      
+      
+        const response = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo-1106",
+          messages: messages,
+          tools: tools,
+          tool_choice: "auto", // auto is default, but we'll be explicit
+        });
+        const responseMessage = response.choices[0].message;
+      
+        // Step 2: check if the model wanted to call a function
+        const toolCalls = responseMessage.tool_calls;
+        if (responseMessage.tool_calls) {
+          // Step 3: call the function
+          // Note: the JSON response may not always be valid; be sure to handle errors
+          const availableFunctions = {
+            get_weather: get_weather,
+          }; // only one function in this example, but you can have multiple
+          messages.push(responseMessage); // extend conversation with assistant's reply
+          for (const toolCall of toolCalls) {
+            const functionName = toolCall.function.name;
+            const functionToCall = availableFunctions[functionName];
+            const functionArgs = JSON.parse(toolCall.function.arguments);
+            const functionResponse = functionToCall(
+              functionArgs.location,
+              functionArgs.unit
+            );
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: functionName,
+              content: functionResponse,
+            }); // extend conversation with function response
+          }
+          const secondResponse = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo-1106",
+            messages: messages,
+          }); // get a new response from the model where it can see the function response
+          return secondResponse.choices;
+        }
+      }
+    });
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

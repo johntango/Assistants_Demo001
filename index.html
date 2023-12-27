@@ -7,36 +7,35 @@
         assistant_id: "",
         file_id: "",
         thread_id: "",
-        run_id: "",
         message: "",
-        run_status: "",
+        func_name: "",
+        run_id: "",
+        status: "",
       };
 
       function get_data_from_elements() {
         data.assistant_id = document.getElementById("assistant_id").value;
         data.file_id = document.getElementById("file_id").value;
         data.thread_id = document.getElementById("thread_id").value;
-        data.run_id = document.getElementById("run_id").value;
         data.message = document.getElementById("message").value;
+        data.func_name = document.getElementById("function").value;
+        data.run_id = document.getElementById("run_id").value;
         data.status = document.getElementById("run_status").value;
       }
       function write_data_to_elements(data) {
         document.getElementById("assistant_id").value = data.assistant_id;
         document.getElementById("file_id").value = data.file_id;
         document.getElementById("thread_id").value = data.thread_id;
-        document.getElementById("run_id").value = data.run_id;
         document.getElementById("message").value = data.message;
+        document.getElementById("func_name").value = data.func_name;
+        document.getElementById("run_id").value = data.run_id;
         document.getElementById("run_status").value = data.status;
       }
 
       function write_to_div(route, message) {
-        console.log(`IN write to div `);
         console.log(`message in Write to Div: ${JSON.stringify(message)}`);
         let div = document.getElementById("response");
         div.innerHTML = JSON.stringify(message);
-        if (route == "get_messages") {
-          div.innerHTML = JSON.stringify(message);
-        }
       }
       async function sendRequest(route) {
         console.log(`sending message to ${route}`);
@@ -55,84 +54,9 @@
         return;
       }
       function parse_response(route, response) {
-        if (route == "create_assistant") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "modify_assistant") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "list_assistants") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "delete_assistant") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "upload_file") {
-          data = response.focus;
-          write_data_to_elements(data);
-          console.log(`data in upload_file: ${JSON.stringify(data)}`);
-          write_to_div(route, response.message);
-        }
-        if (route == "create_file") {
-          data = response.focus;
-          write_data_to_elements(data);
-          console.log(`data in create_file: ${JSON.stringify(data)}`);
-          write_to_div(route, response.message);
-        }
-        if (route == "list_files") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "delete_file") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "create_thread") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "delete_thread") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "create_run") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "delete_run") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "run_status") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
-        if (route == "create_message") {
-          data = response.focus;
-          write_data_to_elements(data);
-
-          write_to_div(route, response.message);
-        }
-        if (route == "get_messages") {
-          data = response.focus;
-          write_data_to_elements(data);
-          write_to_div(route, response.message);
-        }
+        data = response.focus;
+        write_data_to_elements(data);
+        write_to_div(route, response.message);
       }
     </script>
     <style>
@@ -190,7 +114,15 @@
       <label for="messages">Get Messages:</label>
       <button onclick="sendRequest('get_messages')">Get Messages</button>
     </div>
-
+    <div id="function" class="button-container">
+      <label for="function">Add function to Assistant:</label>
+      <input type="text" id="function" name="function" />
+      <button onclick="sendRequest('add_function')">Add function</button>
+      <label for="functions">List function:</label>
+      <button onclick="sendRequest('list_functions')">List functions</button>
+      <label for="functions">Run function:</label>
+      <button onclick="sendRequest('run_function')">Run function</button>
+    </div>
     <div id="response">
       <label for="response">Response from GPT:</label>
     </div>
