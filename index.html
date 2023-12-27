@@ -56,7 +56,7 @@
       function parse_response(route, response) {
         data = response.focus;
         write_data_to_elements(data);
-        write_to_div(route, response.message);
+        write_to_div(route, JSON.stringify(response.message));
       }
     </script>
     <style>

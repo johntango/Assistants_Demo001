@@ -337,6 +337,51 @@ app.post('/get_messages', async(req, res) => {
                 res.status(500).json({ message: 'Get messages failed' });
             }
     });
+
+    // some code that might be useful
+    //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
+
+    app.post('/add_function', async(req, res) => {
+        // Step 1: send the conversation and available functions to the model
+        let message = req.body.message;
+        let assistant_id = req.body.assistant_id;
+        if (message === "") {
+            message = "What's the weather like in San Francisco, Tokyo, and Paris?"
+        }
+        const messages = [
+            { role: "user", content: message },
+        ];
+        const tools = [
+            {
+            type: "function",
+            function: {
+                name: "get_weather",
+                description: "Get the current weather in a given location",
+                parameters: {
+                type: "object",
+                properties: {
+                    location: {
+                    type: "string",
+                    description: "The city and state, e.g. San Francisco, CA",
+                    },
+                    unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+                },
+                required: ["location"],
+                },
+            },
+            },
+        ];
+        const assistant = await openai.beta.assistants.update(
+            assistant_id,
+            {tools:tools}
+        )
+        let response = await assistant;
+        console.log("assistant updated: " + JSON.stringify(response));
+        focus.func_name = "get_weather";
+        res.status(200).json({message: response, focus: focus});
+    
+    });
+
 app.post('/run_function', async(req, res) => {
     async function runConversation() {
         // Step 1: send the conversation and available functions to the model
@@ -405,6 +450,26 @@ app.post('/run_function', async(req, res) => {
         }
       }
     });
+
+    /* // submitting tool outputs
+const run = await openai.beta.threads.runs.submitToolOutputs(
+  thread.id,
+  run.id,
+  {
+    tool_outputs: [
+      {
+        tool_call_id: callIds[0],
+        output: "22C",
+      },
+      {
+        tool_call_id: callIds[1],
+        output: "LA",
+      },
+    ],
+  }
+);
+
+    */
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
