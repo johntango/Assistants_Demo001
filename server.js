@@ -8,8 +8,9 @@ const axios = require('axios');
 const OpenAI = require( 'openai');
 const bodyParser = require('body-parser')   // really important otherwise the body of the request is empty
 
-const getWeather = require('./get_weather.js');
-global.getWeather = getWeather;
+let  tools = [{ type: "code_interpreter" },{type: "retrieval"}]
+const get_weather = require('./get_weather.js');
+global.get_weather = get_weather;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -33,12 +34,13 @@ app.get('/', (req, res) => {
 
 // Define routes
 app.post('/create_assistant', async(req, res) => {
+    tools = [{ type: "code_interpreter" },{type: "retrieval"}]
     try {
         let response = await openai.beta.assistants.create({
           name: "Test Assistant",
           instructions:
             "You are a personal share price tutor. Write and run code to answer financial questions.",
-          tools: [{ type: "code_interpreter" },{type: "retrieval"}],
+          tools: tools,
           model: "gpt-4-1106-preview",
         });
     
@@ -58,7 +60,7 @@ app.post('/create_assistant', async(req, res) => {
 
 app.post('/modify_assistant', (req, res) => {
     console.log('Modify request received:', req.body);
-    res.json({ message: 'Modify action performed' });
+    res.status(200).json({ message: 'Modify action performed' });
 });
 
 // this lists out all the assistants and extracts the latest assistant id and stores it in focus
@@ -162,7 +164,10 @@ app.post('/list_files', async(req, res) => {
         )
         message = response;
         console.log("list_files response: " + JSON.stringify(response));
-        focus.file_id = response.data[0].id;
+        // check if files exist
+        if (response.data.length > 0){
+         focus.file_id = response.data[0].id;
+        }
         
         res.status(200).json({message: message, focus: focus});
     }
@@ -237,7 +242,7 @@ app.post('/create_run', async(req, res) => {
         let response = await openai.beta.threads.runs.create(thread_id,{
             assistant_id: assistant_id
         })
-        message = response;
+        message = await response;
         focus.run_id = response.id;
         console.log("create_run response: " + JSON.stringify(response));
         res.status(200).json({message: message, focus: focus});
@@ -250,18 +255,49 @@ app.post('/create_run', async(req, res) => {
 
     // we need to fix this to write status in to focus 
 app.post('/run_status', async(req, res) => {
-let thread_id = req.body.thread_id;
-let run_id = req.body.run_id;
-try {
-    let response = await openai.beta.threads.runs.retrieve(thread_id,run_id)
-    message = response;
-    focus.status = response.status;
-    console.log("run status response: " + JSON.stringify(response));
-    res.status(200).json({message: response, focus: focus});
-}
-catch(error) {
+    let thread_id = req.body.thread_id;
+    let run_id = req.body.run_id;
+    try {
+        let response = await openai.beta.threads.runs.retrieve(thread_id,run_id)
+        message = response;
+        focus.status = response.status;
+        if (response.status === "requires_action") {
+            console.log("run status response: " + JSON.stringify(message));
+            // extract function to be called from response
+            const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
+            for(let toolCall of toolCalls) {
+                console.log("toolCall: " + JSON.stringify(toolCall));
+                functionName = toolCall.function.name;
+                focus.func_name = functionName;
+                console.log("Function to be called: " + focus.func_name);
+                let args = JSON.parse(toolCall.function.arguments);
+                let argsArray = Object.keys(args).map ((key) => args[key]);
+                // dynamically call the function with args
+
+                let functionResponse = await global[functionName].apply(null, argsArray);
+            
+
+                let toolOutputs = []
+                toolOutputs.push({
+                    tool_call_id: toolCall.id,
+                    output: functionResponse
+                })
+            }
+            await openai.beta.threads.runs.submitToolOutputs(   
+                thread_id,
+                run_id,
+                {
+                    tool_outputs: toolOutputs
+                }
+            )
+            console.log("functionResponse: " + functionResponse);
+            res.status(200).json({message: functionResponse, focus: focus});
+
+            }
+        }
+    catch(error) {
             console.log(error);
-            res.status(500).json({ message: 'Run Delete failed' });
+            res.status(500).json({ message: 'Run Status failed' });
         }
 });
 
@@ -282,22 +318,22 @@ catch(error) {
         }
 });
 app.post('/create_message', async(req, res) => {
-    let m = req.body.message;
+    let prompt = req.body.message;
     let thread_id = req.body.thread_id;
-    console.log("create_message: " + m + " thread_id: " + thread_id);
+    console.log("create_message: " + prompt + " thread_id: " + thread_id);
     try {
         let response = await openai.beta.threads.messages.create(thread_id,
             {
             role:"user",
-            content: m,
+            content: prompt,
         })
-        message = response;;
+        message = await response;;
         console.log("create message response: " + JSON.stringify(response));
         res.status(200).json({message: message, focus: focus});
     }
     catch(error) {
                 console.log(error);
-                res.status(500).json({ message: 'Run Delete failed' });
+                res.status(500).json({ message: 'Create  Message failed' });
             }
     });
 
@@ -305,11 +341,12 @@ async function get_run_status(thread_id, run_id) {
     try {
         let intervalId = setInterval(async () => {
             let response = await openai.beta.threads.runs.retrieve(thread_id,run_id)
-            focus.status = response.status;
-            if (response.status === "completed") {
-                clearInterval(intervalId); // Stop polling when status is complete
+            focus.status = await response.status;
+            console.log("run status response: " + JSON.stringify(response));
+            if (focus.status === "completed") {
+                clearInterval(intervalId); // Stop polling when status is completed
             }
-            console.log("run status response: " + response.status)
+            await console.log("run status response: " + response.status)
         }, 500); // Poll every 1 second
         // now get the messages
         let messages = await openai.beta.threads.messages.list( thread_id )   
@@ -324,7 +361,7 @@ async function get_run_status(thread_id, run_id) {
 app.post('/get_messages', async(req, res) => {
     let thread_id = req.body.thread_id;
     let run_id = req.body.run_id;
-    console.log("get_messages: on thread_id: " + thread_id);
+    console.log("get_messages: on thread_id: " + thread_id + " run_id: " + run_id);
     try {
         let messages = await get_run_status(thread_id, run_id);
         console.log("PRINTING MESSAGES: " );
@@ -351,26 +388,26 @@ app.post('/get_messages', async(req, res) => {
         const messages = [
             { role: "user", content: message },
         ];
-        const tools = [
+        tools.push(
             {
-            type: "function",
-            function: {
-                name: "get_weather",
-                description: "Get the current weather in a given location",
-                parameters: {
-                type: "object",
-                properties: {
-                    location: {
-                    type: "string",
-                    description: "The city and state, e.g. San Francisco, CA",
+                type: "function",
+                function: {
+                    name: "get_weather",
+                    description: "Get the current weather in a given location",
+                    parameters: {
+                    type: "object",
+                    properties: {
+                        location: {
+                        type: "string",
+                        description: "The city and state, e.g. San Francisco, CA",
+                        },
+                        unit: { type: "string", enum: ["celsius", "fahrenheit"] },
                     },
-                    unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+                    required: ["location"],
+                    },
                 },
-                required: ["location"],
-                },
-            },
-            },
-        ];
+            })
+    
         const assistant = await openai.beta.assistants.update(
             assistant_id,
             {tools:tools}
@@ -381,44 +418,30 @@ app.post('/get_messages', async(req, res) => {
         res.status(200).json({message: response, focus: focus});
     
     });
+app.post('/list_tools', async(req, res) => {
+    console.log("list_tools: " + JSON.stringify(tools));
+    res.status(200).json({message: tools, focus: focus});
+});
 
 app.post('/run_function', async(req, res) => {
-    async function runConversation() {
-        // Step 1: send the conversation and available functions to the model
-        const messages = [
-          { role: "user", content: "What's the weather like in San Francisco, Tokyo, and Paris?" },
-        ];
-        const tools = [
-          {
-            type: "function",
-            function: {
-              name: "get_weather",
-              description: "Get the current weather in a given location",
-              parameters: {
-                type: "object",
-                properties: {
-                  location: {
-                    type: "string",
-                    description: "The city and state, e.g. San Francisco, CA",
-                  },
-                  unit: { type: "string", enum: ["celsius", "fahrenheit"] },
-                },
-                required: ["location"],
-              },
-            },
-          },
-        ];
-      
-      
-        const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo-1106",
-          messages: messages,
-          tools: tools,
-          tool_choice: "auto", // auto is default, but we'll be explicit
-        });
-        const responseMessage = response.choices[0].message;
-      
-        // Step 2: check if the model wanted to call a function
+    // Step 1: send the conversation and available functions to the model
+    const messages = [
+    { role: "user", content: "What's the weather like in San Francisco, Tokyo, and Paris?" },
+    ];
+
+    const response = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo-1106",
+    messages: messages,
+    tools: tools,
+    tool_choice: "auto", // auto is default, but we'll be explicit
+    });
+    const responseMessage = await response.choices[0].message;
+    res.status(200).json({message: responseMessage, focus: focus});
+
+});
+
+    /* 
+     // Step 2: check if the model wanted to call a function
         const toolCalls = responseMessage.tool_calls;
         if (responseMessage.tool_calls) {
           // Step 3: call the function
@@ -449,9 +472,8 @@ app.post('/run_function', async(req, res) => {
           return secondResponse.choices;
         }
       }
-    });
-
-    /* // submitting tool outputs
+    
+    // submitting tool outputs
 const run = await openai.beta.threads.runs.submitToolOutputs(
   thread.id,
   run.id,

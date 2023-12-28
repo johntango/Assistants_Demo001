@@ -18,7 +18,7 @@
         data.file_id = document.getElementById("file_id").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.message = document.getElementById("message").value;
-        data.func_name = document.getElementById("function").value;
+        data.func_name = document.getElementById("func_name").value;
         data.run_id = document.getElementById("run_id").value;
         data.status = document.getElementById("run_status").value;
       }
@@ -38,9 +38,8 @@
         div.innerHTML = JSON.stringify(message);
       }
       async function sendRequest(route) {
-        console.log(`sending message to ${route}`);
         get_data_from_elements();
-
+        console.log(`sending data: ${JSON.stringify(data)} to ${route}`);
         let response = await fetch(`/${route}`, {
           method: "POST",
           headers: {
@@ -50,13 +49,14 @@
           mode: "cors",
         });
         let res = await response.json();
+        console.log(`In UI response: ${JSON.stringify(res)}`);
         parse_response(route, res);
         return;
       }
       function parse_response(route, response) {
         data = response.focus;
         write_data_to_elements(data);
-        write_to_div(route, JSON.stringify(response.message));
+        write_to_div(route, response.message);
       }
     </script>
     <style>
@@ -99,32 +99,31 @@
       <button onclick="sendRequest('delete_thread')">Delete</button>
     </div>
 
-    <div id="run" class="button-container">
+    <div class="button-container">
       <label for="run_id">Run ID:</label>
       <input type="text" id="run_id" name="run_id" />
       <input type="text" id="run_status" name="run_status" />
       <button onclick="sendRequest('create_run')">Create</button>
-      <button onclick="sendRequest('delete_run')">Cancel</button>
+      <button onclick="sendRequest('delete_run')">Cancel Run</button>
       <button onclick="sendRequest('run_status')">Get Status</button>
     </div>
-    <div id="message" class="button-container">
+    <div class="button-container">
       <label for="message">Create Message:</label>
       <input type="text" id="message" name="message" />
       <button onclick="sendRequest('create_message')">Create Message</button>
-      <label for="messages">Get Messages:</label>
+      <label for="get_messages">Get Messages:</label>
       <button onclick="sendRequest('get_messages')">Get Messages</button>
     </div>
-    <div id="function" class="button-container">
-      <label for="function">Add function to Assistant:</label>
-      <input type="text" id="function" name="function" />
+    <div class="button-container">
+      <label for="func_name">Add function to Assistant:</label>
+      <input type="text" id="func_name" name="func_names" />
       <button onclick="sendRequest('add_function')">Add function</button>
-      <label for="functions">List function:</label>
-      <button onclick="sendRequest('list_functions')">List functions</button>
       <label for="functions">Run function:</label>
       <button onclick="sendRequest('run_function')">Run function</button>
+      <label for="tools">List toold:</label>
+      <button onclick="sendRequest('list_tools')">List Tools</button>
     </div>
-    <div id="response">
-      <label for="response">Response from GPT:</label>
-    </div>
+    <label for="response">Response from GPT:</label>
+    <div id="response"></div>
   </body>
 </html>
