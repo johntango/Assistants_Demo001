@@ -155,8 +155,9 @@ app.post('/create_file', async(req, res) => {
 });
 
 
-
+// list files and put the latest file id into focus
 app.post('/list_files', async(req, res) => {
+
     let data = req.body;
     let assistant_id = data.assistant_id;
     try {
@@ -263,7 +264,7 @@ app.post('/run_status', async(req, res) => {
         message = response;
         focus.status = response.status;
         if (response.status === "requires_action") {
-
+        
             console.log("run status response: " + JSON.stringify(message));
             // extract function to be called from response
             const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
@@ -286,7 +287,8 @@ app.post('/run_status', async(req, res) => {
                     tool_call_id: toolCall.id,
                     output: functionResponse
                 })
-            
+                let text = JSON.stringify({message:`function ${functionName} called`, focus: focus})
+                res.write(text);
                 await openai.beta.threads.runs.submitToolOutputs(   
                     thread_id,
                     run_id,
@@ -387,46 +389,46 @@ app.post('/get_messages', async(req, res) => {
     // some code that might be useful
     //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
 
-    app.post('/add_function', async(req, res) => {
-        // Step 1: send the conversation and available functions to the model
-        let message = req.body.message;
-        let assistant_id = req.body.assistant_id;
-        if (message === "") {
-            message = "What's the weather like in San Francisco, Tokyo, and Paris?"
-        }
-        const messages = [
-            { role: "user", content: message },
-        ];
-        tools.push(
-            {
-                type: "function",
-                function: {
-                    name: "get_weather",
-                    description: "Get the current weather in a given location",
-                    parameters: {
-                    type: "object",
-                    properties: {
-                        location: {
-                        type: "string",
-                        description: "The city and state, e.g. San Francisco, CA",
-                        },
-                        unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+app.post('/add_function', async(req, res) => {
+    // Step 1: send the conversation and available functions to the model
+    let message = req.body.message;
+    let assistant_id = req.body.assistant_id;
+    if (message === "") {
+        message = "What's the weather like in San Francisco, Tokyo, and Paris?"
+    }
+    const messages = [
+        { role: "user", content: message },
+    ];
+    tools.push(
+        {
+            type: "function",
+            function: {
+                name: "get_weather",
+                description: "Get the current weather in a given location",
+                parameters: {
+                type: "object",
+                properties: {
+                    location: {
+                    type: "string",
+                    description: "The city and state, e.g. San Francisco, CA",
                     },
-                    required: ["location"],
-                    },
+                    unit: { type: "string", enum: ["celsius", "fahrenheit"] },
                 },
-            })
-    
-        const assistant = await openai.beta.assistants.update(
-            assistant_id,
-            {tools:tools}
-        )
-        let response = await assistant;
-        console.log("assistant updated: " + JSON.stringify(response));
-        focus.func_name = "get_weather";
-        res.status(200).json({message: response, focus: focus});
-    
-    });
+                required: ["location"],
+                },
+            },
+        })
+
+    const assistant = await openai.beta.assistants.update(
+        assistant_id,
+        {tools:tools}
+    )
+    let response = await assistant;
+    console.log("assistant updated: " + JSON.stringify(response));
+    focus.func_name = "get_weather";
+    res.status(200).json({message: response, focus: focus});
+
+});
 app.post('/list_tools', async(req, res) => {
     console.log("list_tools: " + JSON.stringify(tools));
     res.status(200).json({message: tools, focus: focus});

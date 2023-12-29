@@ -1,0 +1,63 @@
+"openapi": "3.0.0",
+"info": {
+  "version": "1.0.0",
+  "title": "Country API"
+},
+"paths": {
+  "/": {
+    "get": {
+      "summary": "Get country by name",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "name",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "The name to get the country for"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Successful response",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "country": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "country_id": {
+                          "type": "string"
+                        },
+                        "probability": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request, name parameter is missing or invalid"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+},
+"servers": [
+  {
+    "url": "https://api.nationalize.io"
+  }
+]
+}
