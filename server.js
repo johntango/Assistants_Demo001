@@ -10,6 +10,7 @@ const bodyParser = require('body-parser')   // really important otherwise the bo
 
 let  tools = [{ type: "code_interpreter" },{type: "retrieval"}]
 const get_weather = require('./get_weather.js');
+const { get } = require('http');
 global.get_weather = get_weather;
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -262,9 +263,11 @@ app.post('/run_status', async(req, res) => {
         message = response;
         focus.status = response.status;
         if (response.status === "requires_action") {
+
             console.log("run status response: " + JSON.stringify(message));
             // extract function to be called from response
             const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
+            let toolOutputs = []
             for(let toolCall of toolCalls) {
                 console.log("toolCall: " + JSON.stringify(toolCall));
                 functionName = toolCall.function.name;
@@ -272,34 +275,40 @@ app.post('/run_status', async(req, res) => {
                 console.log("Function to be called: " + focus.func_name);
                 let args = JSON.parse(toolCall.function.arguments);
                 let argsArray = Object.keys(args).map ((key) => args[key]);
+                if (functionName === "get_weather") {{
+                    functionResponse = await get_weather(argsArray[0], argsArray[1])
+                }
                 // dynamically call the function with args
 
-                let functionResponse = await global[functionName].apply(null, argsArray);
+                //let functionResponse = await global[functionName].apply(null, argsArray);
             
-
-                let toolOutputs = []
                 toolOutputs.push({
                     tool_call_id: toolCall.id,
                     output: functionResponse
                 })
+            
+                await openai.beta.threads.runs.submitToolOutputs(   
+                    thread_id,
+                    run_id,
+                    {
+                        tool_outputs: toolOutputs
+                    }
+                )
+                // now continue polling for status 
             }
-            await openai.beta.threads.runs.submitToolOutputs(   
-                thread_id,
-                run_id,
-                {
-                    tool_outputs: toolOutputs
-                }
-            )
-            console.log("functionResponse: " + functionResponse);
-            res.status(200).json({message: functionResponse, focus: focus});
-
+            continue;
+            }
+            if(response.status == "completed" || response.status == "failed") {
+                let message = "Completed run with status: " + response.status;
+                res.status(200).json({message: message, focus: focus});
             }
         }
+    }
     catch(error) {
-            console.log(error);
-            res.status(500).json({ message: 'Run Status failed' });
-        }
-});
+        console.log(error);
+        res.status(500).json({ message: 'Run Status failed' }, focus);
+    }
+})
 
 
 app.post('/delete_run', async(req, res) => {
