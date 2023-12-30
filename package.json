@@ -1,8 +1,8 @@
 {
   "name": "assistants",
   "version": "1.0.0",
-  "description": "This will create an Assistant called MathTutor",
-  "main": "mathTutor.js",
+  "description": "This will create an Assistant",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -17,6 +17,7 @@
     "fs": "^0.0.1-security",
     "openai": "^4.17.4",
     "path": "^0.12.7",
-    "url": "^0.11.3"
+    "url": "^0.11.3",
+    "lanchain": "^1.0.0"
   }
 }

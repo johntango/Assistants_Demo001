@@ -275,8 +275,11 @@ app.post('/run_status', async(req, res) => {
                 functionName = toolCall.function.name;
                 focus.func_name = functionName;
                 console.log("Function to be called: " + focus.func_name);
+
                 let args = JSON.parse(toolCall.function.arguments);
                 let argsArray = Object.keys(args).map ((key) => args[key]);
+                
+
                 if (functionName === "get_weather") {{
                     functionResponse = await get_weather(argsArray[0], argsArray[1])
                 }
@@ -431,10 +434,23 @@ app.post('/add_function', async(req, res) => {
 
 });
 app.post('/list_tools', async(req, res) => {
-    let functions = getFunctions();
-    for (let func in functions)
-        tools.push({type: "function", function: func})
-    res.status(200).json({message: JSON.stringify(tools), focus: focus});
+    let assistant_id = req.body.assistant_id;
+    let functions = await getFunctions();
+// I want to loop over dictionary called functions and create a tools array
+    let tools = [];
+    keys = Object.keys(functions);
+    for (let key of keys) {
+        tools.push({type: "function", function: functions[key].details})
+    }
+
+    const assistant = await openai.beta.assistants.update(
+        assistant_id,
+        {tools:tools}
+    )
+    let response = await assistant;
+    console.log("assistant tools updated: " + JSON.stringify(response));
+    focus.func_name = "get_weather";
+    res.status(200).json({message: response, focus: focus});
 })
     
 app.post('/run_function', async(req, res) => {
@@ -453,7 +469,7 @@ app.post('/run_function', async(req, res) => {
     res.status(200).json({message: responseMessage, focus: focus});
 
 });
-function getFunctions() {
+async function getFunctions() {
     const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
     const openAIFunctions = {};
 
@@ -461,11 +477,12 @@ function getFunctions() {
       if (file.endsWith(".js")) {
         const moduleName = file.slice(0, -3);
         const modulePath = `./functions/${moduleName}.js`;
-        const { execute, details } = import(modulePath);
+        // get the two const values from the file
+        const {execute, details} = require(`${modulePath}`);
 
         openAIFunctions[moduleName] = {
-          execute,
-          details,
+            execute,
+            details
         };
       }
     }
