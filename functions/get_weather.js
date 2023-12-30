@@ -1,7 +1,7 @@
 const fs = require( "fs");
 const path = require("path");
 
-const execute = async (name) => {
+const execute = async (location) => {
   if (location.toLowerCase().includes("tokyo")) {
     return JSON.stringify({ location: "Tokyo", temperature: "10", unit: "celsius" });
   } else if (location.toLowerCase().includes("san francisco")) {

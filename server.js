@@ -270,44 +270,37 @@ app.post('/run_status', async(req, res) => {
             // extract function to be called from response
             const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
             let toolOutputs = []
+            let functions_available = await getFunctions();
             for(let toolCall of toolCalls) {
                 console.log("toolCall: " + JSON.stringify(toolCall));
                 functionName = toolCall.function.name;
-                focus.func_name = functionName;
-                console.log("Function to be called: " + focus.func_name);
-
-                let args = JSON.parse(toolCall.function.arguments);
-                let argsArray = Object.keys(args).map ((key) => args[key]);
-                
-
-                if (functionName === "get_weather") {{
-                    functionResponse = await get_weather(argsArray[0], argsArray[1])
+                // get function from functions_available
+                let functionToExecute = functions_available[`${functionName}`];
+               
+                if (functionToExecute.execute) {
+                    let args = JSON.parse(toolCall.function.arguments);
+                    let argsArray = Object.keys(args).map ((key) => args[key]);
+                    let functionResponse = await functionToExecute.execute(argsArray[0],argsArray[1]);
+                    toolOutputs.push({
+                        tool_call_id: toolCall.id,
+                        output: functionResponse
+                    });
+                    let text = JSON.stringify({message:`function ${functionName} called`, focus: focus});
+                    res.write(text);
+                    await openai.beta.threads.runs.submitToolOutputs(   
+                        thread_id,
+                        run_id,
+                        {
+                            tool_outputs: toolOutputs
+                        }
+                    );
                 }
-                // dynamically call the function with args
-
-                //let functionResponse = await global[functionName].apply(null, argsArray);
-            
-                toolOutputs.push({
-                    tool_call_id: toolCall.id,
-                    output: functionResponse
-                })
-                let text = JSON.stringify({message:`function ${functionName} called`, focus: focus})
-                res.write(text);
-                await openai.beta.threads.runs.submitToolOutputs(   
-                    thread_id,
-                    run_id,
-                    {
-                        tool_outputs: toolOutputs
-                    }
-                )
-                // now continue polling for status 
             }
-            continue;
-            }
-            if(response.status == "completed" || response.status == "failed") {
-                let message = "Completed run with status: " + response.status;
-                res.status(200).json({message: message, focus: focus});
-            }
+            // now continue polling for status 
+        }
+        if(response.status == "completed" || response.status == "failed") {
+            let message = "Completed run with status: " + response.status;
+            res.status(200).json({message: message, focus: focus});
         }
     }
     catch(error) {
@@ -394,6 +387,7 @@ app.post('/get_messages', async(req, res) => {
     //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
 
 app.post('/add_function', async(req, res) => {
+    console.log("add_function is REDUNDENT : " + JSON.stringify(req.body));
     // Step 1: send the conversation and available functions to the model
     let message = req.body.message;
     let assistant_id = req.body.assistant_id;
