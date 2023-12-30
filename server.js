@@ -6,10 +6,11 @@ const port = 3000;
 const fs = require('fs');
 const axios = require('axios');
 const OpenAI = require( 'openai');
-const bodyParser = require('body-parser')   // really important otherwise the body of the request is empty
+const fileURLToPath =require("url");
+const bodyParser = require('body-parser');
 
 let  tools = [{ type: "code_interpreter" },{type: "retrieval"}]
-const get_weather = require('./get_weather.js');
+const get_weather = require('./functions/get_weather.js');
 const { get } = require('http');
 global.get_weather = get_weather;
 
@@ -430,10 +431,12 @@ app.post('/add_function', async(req, res) => {
 
 });
 app.post('/list_tools', async(req, res) => {
-    console.log("list_tools: " + JSON.stringify(tools));
-    res.status(200).json({message: tools, focus: focus});
-});
-
+    let functions = getFunctions();
+    for (let func in functions)
+        tools.push({type: "function", function: func})
+    res.status(200).json({message: JSON.stringify(tools), focus: focus});
+})
+    
 app.post('/run_function', async(req, res) => {
     // Step 1: send the conversation and available functions to the model
     const messages = [
@@ -450,7 +453,25 @@ app.post('/run_function', async(req, res) => {
     res.status(200).json({message: responseMessage, focus: focus});
 
 });
+function getFunctions() {
+    const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
+    const openAIFunctions = {};
 
+    for (const file of files) {
+      if (file.endsWith(".js")) {
+        const moduleName = file.slice(0, -3);
+        const modulePath = `./functions/${moduleName}.js`;
+        const { execute, details } = import(modulePath);
+
+        openAIFunctions[moduleName] = {
+          execute,
+          details,
+        };
+      }
+    }
+
+    return openAIFunctions;
+  }
     /* 
      // Step 2: check if the model wanted to call a function
         const toolCalls = responseMessage.tool_calls;

@@ -50,10 +50,10 @@
         });
         let res = await response.json();
         console.log(`In UI response: ${JSON.stringify(res)}`);
-        parse_response(route, res);
+        await parse_response(route, res);
         return;
       }
-      function parse_response(route, response) {
+      async function parse_response(route, response) {
         data = response.focus;
         write_data_to_elements(data);
         write_to_div(route, response.message);
@@ -111,19 +111,17 @@
       <label for="message">Create Message:</label>
       <input type="text" id="message" name="message" />
       <button onclick="sendRequest('create_message')">Create Message</button>
-      <label for="get_messages">Get Messages:</label>
       <button onclick="sendRequest('get_messages')">Get Messages</button>
     </div>
     <div class="button-container">
       <label for="func_name">Add Tools:</label>
       <input type="text" id="func_name" name="func_names" />
       <button onclick="sendRequest('add_function')">Add function</button>
-      <label for="functions">Run function:</label>
       <button onclick="sendRequest('run_function')">Run function</button>
-      <label for="tools">List tools:</label>
       <button onclick="sendRequest('list_tools')">List Tools</button>
     </div>
     <label for="response">Response from GPT:</label>
     <div id="response"></div>
+    <div id="functions"></div>
   </body>
 </html>
