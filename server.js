@@ -280,10 +280,10 @@ app.post('/run_status', async(req, res) => {
                 if (functionToExecute.execute) {
                     let args = JSON.parse(toolCall.function.arguments);
                     let argsArray = Object.keys(args).map ((key) => args[key]);
-                    let functionResponse = await functionToExecute.execute(argsArray[0],argsArray[1]);
+                    let functionResponse = await functionToExecute.execute(...argsArray);
                     toolOutputs.push({
                         tool_call_id: toolCall.id,
-                        output: functionResponse
+                        output: JSON.stringify(functionResponse)
                     });
                     let text = JSON.stringify({message:`function ${functionName} called`, focus: focus});
                     res.write(text);
@@ -295,6 +295,7 @@ app.post('/run_status', async(req, res) => {
                         }
                     );
                 }
+                continue;
             }
             // now continue polling for status 
         }
