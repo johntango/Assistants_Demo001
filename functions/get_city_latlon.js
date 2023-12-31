@@ -5,7 +5,6 @@ const execute = async (city) => {
 
   // get key from env. see https://home.openweathermap.org/api_keys
   const key = process.env.WEATHER_API_KEY;
-  let city = city;
   let state = "";
   let country = ""
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`

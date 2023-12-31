@@ -43,7 +43,7 @@ const execute = async ({ url }) => {
 }
 
 const details = {
-    name: "takeScreenshot",
+    name: "take_screen_shot",
     description: "Take a screenshot of a website",
     parameters: {
       type: "object",

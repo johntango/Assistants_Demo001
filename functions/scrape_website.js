@@ -3,7 +3,7 @@ const fs = require( "fs");
 const path = require("path");
 
 const execute = async (options) => {
-  const { url } = options;
+  const url  = options;
   try {
     const websiteName = new URL(url).hostname;
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -37,7 +37,7 @@ const execute = async (options) => {
 };
 
 const details = {
-    name: "scrapeWebsite",
+    name: "scrape_website",
     description: "Scrape the HTML of a website",
     parameters: {
       type: "object",
