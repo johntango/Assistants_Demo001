@@ -2,6 +2,7 @@ const fs = require( "fs");
 const path = require("path");
 
 const execute = async (location) => {
+  // test 
   if (location.toLowerCase().includes("tokyo")) {
     return JSON.stringify({ location: "Tokyo", temperature: "10", unit: "celsius" });
   } else if (location.toLowerCase().includes("san francisco")) {
@@ -11,6 +12,7 @@ const execute = async (location) => {
   } else {
     return JSON.stringify({ location, temperature: "unknown" });
   }
+  
 }
 const details = {
   name: "get_weather",
