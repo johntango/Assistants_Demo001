@@ -255,8 +255,9 @@ app.post('/create_run', async(req, res) => {
                 res.status(500).json({ message: 'Run Delete failed' });
             }
     });
-
-    // we need to fix this to write status in to focus 
+//
+// this is the main loop in handling messages calling functions etc
+//
 app.post('/run_status', async(req, res) => {
     let thread_id = req.body.thread_id;
     let run_id = req.body.run_id;

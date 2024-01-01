@@ -7,9 +7,14 @@ const execute = async (city) => {
   const key = process.env.WEATHER_API_KEY;
   let state = "";
   let country = ""
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`
+  let limit = 1;
+  const url = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${key}`
   const response = await fetch(url);
-  return response;
+  let data = await response.json();
+  console.log("Lat,Loncle:"+JSON.stringify(data))
+  let lat = data[0]["lat"];
+  let lon = data[0]["lon"];
+  return {city: city, lat: lat, lon: lon}
 
 }
 const details = {

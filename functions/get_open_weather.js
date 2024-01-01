@@ -6,9 +6,19 @@ const execute = async (city) => {
   const key = process.env.WEATHER_API_KEY;
   let state = "";
   let country = ""
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`
+  let url = `https://api.openweathermap.org/data/2.5/weather?q=Boston&appid=b4a18b28450d3b5969679aff036096ee`
+  fetch(url)  
+  .then(function(resp) { return resp.json() }) // Convert data to json
+  .then(function(data) {
+    console.log(data);
+  })
   const response = await fetch(url);
-  return response;
+  if (response.status !== 200) {
+    return {error: "Error getting weather"}
+  }
+  let data = response.json();
+  console.log("WEATHER:"+JSON.stringify(response))
+  return data;
 
 }
 const details = {
