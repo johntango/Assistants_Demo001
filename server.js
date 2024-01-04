@@ -6,15 +6,21 @@ const port = 3000;
 const fs = require('fs');
 const axios = require('axios');
 const OpenAI = require( 'openai');
-const fileURLToPath =require("url");
+const fileURLToPath = require("url");
 const bodyParser = require('body-parser');
+
+
 
 let  tools = [{ type: "code_interpreter" },{type: "retrieval"}]
 //const get_weather = require('./functions/get_weather.js');
 const { get } = require('http');
 
 
-app.use(bodyParser.urlencoded({ extended: false }));
+// Serve static images from the 'images' folder
+app.use(express.static(__dirname+'/images')); 
+console.log("dirname: " + __dirname);
+
+
 
 // get OPENAI_API_KEY from GitHub secrets
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -26,8 +32,7 @@ let focus = {assistant_id: "", file_id: "", thread_id: "", message: "",func_name
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
 
-// Serve static files from the 'public' folder
-app.use(express.static('./'));
+
 
 // Serve index.html at the root URL '/'
 app.get('/', (req, res) => {
