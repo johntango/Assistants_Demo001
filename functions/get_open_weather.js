@@ -6,7 +6,7 @@ const execute = async (city) => {
   const key = process.env.WEATHER_API_KEY;
   let state = "";
   let country = ""
-  let url = `https://api.openweathermap.org/data/2.5/weather?q=Boston&appid=b4a18b28450d3b5969679aff036096ee`
+  let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`
   fetch(url)  
   .then(function(resp) { return resp.json() }) // Convert data to json
   .then(function(data) {
