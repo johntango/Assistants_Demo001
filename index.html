@@ -41,7 +41,6 @@
         data.file_id = document.getElementById("file_id").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.message = document.getElementById("message").value;
-        data.func_name = document.getElementById("func_name").value;
         data.run_id = document.getElementById("run_id").value;
         data.status = document.getElementById("run_status").value;
       }
@@ -50,7 +49,6 @@
         document.getElementById("file_id").value = data.file_id;
         document.getElementById("thread_id").value = data.thread_id;
         document.getElementById("message").value = data.message;
-        document.getElementById("func_name").value = data.func_name;
         document.getElementById("run_id").value = data.run_id;
         document.getElementById("run_status").value = data.status;
       }
@@ -220,12 +218,12 @@
         >
           Add Tools
         </button>
-        <input type="text" id="func_name" name="func_names" />
 
         <div>
           <label for="response">Response from GPT:</label>
         </div>
-        <div id="response"></div>
+        <div id="response" style="width:80%; height:700px; background:rgb(184, 237, 158);">
+        </div>
         <div id="functions"></div>
       </div>
     </div>
