@@ -1,12 +1,13 @@
-const PuppeteerWebBaseLoader = require ("langchain/document_loaders/web/puppeteer");
+const { PuppeteerWebBaseLoader } = require("langchain/document_loaders/web/puppeteer");
 const fs = require( "fs");
 const path = require("path");
-const puppeteer = require('puppeteer');
+const { URL } = require("url");
+const puppeteer = require("puppeteer");
 
 const execute = async (url ) => {
   try {
     //const websiteName = new URL(url).hostname;
-    const websiteName = url;
+    const websiteName = new URL(url).hostname;
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
     const outputDirectory = path.join(".", "output");
@@ -19,9 +20,8 @@ const execute = async (url ) => {
       outputDirectory,
       screenshotFileName
     );
-    let browser = await puppeteer.launch();
 
-    const PuppeteerOptions = {
+    const loader = new PuppeteerWebBaseLoader(url, {
       launchOptions: {
         headless: "new",
       },
@@ -34,9 +34,7 @@ const execute = async (url ) => {
         });
         return `Screenshot saved to ${screenshotFilePathWithDate}`;
       },
-    }
-    const loader =  new PuppeteerWebBaseLoader(url, PuppeteerOptions);
-
+    });
     await loader.load();
 
     return `Screenshot saved to ${screenshotFilePathWithDate}`;
