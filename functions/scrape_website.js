@@ -1,6 +1,8 @@
-const PuppeteerWebBaseLoader = require ("langchain/document_loaders/web/puppeteer");
+const { PuppeteerWebBaseLoader } = require("langchain/document_loaders/web/puppeteer");
 const fs = require( "fs");
 const path = require("path");
+const { URL } = require("url");
+const puppeteer = require("puppeteer");
 
 const execute = async (options) => {
   const url  = options;
