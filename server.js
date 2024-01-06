@@ -67,7 +67,7 @@ app.post('/create_assistant', async (req, res) => {
 
 app.post('/modify_assistant', (req, res) => {
     console.log('Modify request received:', req.body);
-    res.status(200).json({ message: 'Modify action performed' });
+    res.status(200).json({ message: 'No Modify action available at present',focus: focus });
 });
 
 // this lists out all the assistants and extracts the latest assistant id and stores it in focus

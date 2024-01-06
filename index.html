@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Managoing Assistants</title>
+    <title>Managoing Assistants MIT Mark 1</title>
     <link
       rel="stylesheet"
       href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
@@ -84,10 +84,23 @@
   <body>
     <div class="card">
       <div class="card-body">
-        <p style="display:inline-block;">
-          <img src="/logo001.jpg" width="60" height="40" />
-          <h4>MIT Assistant Builder Mark 1</h4>
-        </p>
+        <section class="part2">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4">
+                <img
+                  alt=""
+                  class="resize-image center-block"
+                  id="image1"
+                  src="logo001.jpg"
+                  width="100"
+                  height="50"
+                />
+                <h3 class="text-center">MIT Assitant Builder R1</h3>
+              </div>
+            </div>
+          </div>
+        </section>
         <label for="assistant_id" class="label-container">Assistant</label>
 
         <button
@@ -120,7 +133,7 @@
         </button>
         <input type="text" id="assistant_id" name="assistant_id" />
 
-        <label for="file_id" class="label-container">File ID:</label>
+        <label for="file_id" class="label-container">File Load:</label>
         <button
           class="btn btn-primary mr-1"
           type="submit"
@@ -133,7 +146,7 @@
           type="submit"
           onclick="sendRequest('create_file')"
         >
-          Create
+          Attach
         </button>
         <button
           class="btn btn-primary mr-1"
@@ -222,8 +235,10 @@
         <div>
           <label for="response">Response from GPT:</label>
         </div>
-        <div id="response" style="width:80%; height:700px; background:rgb(184, 237, 158);">
-        </div>
+        <div
+          id="response"
+          style="width: 80%; height: 700px; background: rgb(184, 237, 158)"
+        ></div>
         <div id="functions"></div>
       </div>
     </div>
