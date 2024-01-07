@@ -10,3 +10,9 @@
 ## You must have both "execute" and "details" variables 
 ## This allows us to dynamically call functions that the LLM requests
 
+To crawlDomain to answer questions is a sophisticated modified from 
+btg5679/javascript-openai-web-crawler  It will answer question if possible from 
+stored embeddings.  If not it will crawl the web to find the answer.  It will 
+then store the answer in the database for future use.  
+You may want to delete crawled_urls.csv and contents.csv to start fresh.
+

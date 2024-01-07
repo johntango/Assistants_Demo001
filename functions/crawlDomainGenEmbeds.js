@@ -9,10 +9,10 @@ const { URL } = require( "url");
 const { parse } = require( "node-html-parser");
 const natural = require( "natural");
 const WordTokenizer = natural.WordTokenizer;
-const { OpenAI, OpenAIApi } = require("openai");
+const { OpenAI  } = require("openai");
 
 
-const execute = async (url, question)=>{
+const execute = async (domain, question)=>{
  
     dotenv.config();
 
@@ -21,13 +21,19 @@ const execute = async (url, question)=>{
     // get OPENAI_API_KEY from GitHub secrets
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-  
-    function getDomain(url) {
-        const parsedUrl = new URL(url);
-        return parsedUrl.hostname;
+
+    // check if url has https:// if it does strip it out for domain
+    
+    const protocol = "https";
+    if (domain.startsWith("http://")) {
+        domain = domain.slice(7);
+    } else if (domain.startsWith("https://")) {
+        domain = domain.slice(8);
     }
-    let domain = getDomain(url);
-    let fullUrl = url;
+    const fullUrl = new URL(`${protocol}://${domain}`);
+    console.log(fullUrl);
+  
+    
     class HyperlinkParser {
         constructor() {
             this.hyperlinks = [];
@@ -260,7 +266,7 @@ const execute = async (url, question)=>{
     let response;
     try {
         console.log("initiating openai api call");
-        response = await openai.createCompletion({
+        response = await openai.completions.create({
         model: "text-davinci-003",
         prompt,
         max_tokens: 200,
@@ -281,7 +287,7 @@ const execute = async (url, question)=>{
     console.log("finished getRelevantTokens");
 
     // Extract and return the relevant tokens from the response
-    const relevantTokensText = response?.data?.choices[0].text.trim();
+    const relevantTokensText = response?.choices[0].text.trim();
     const relevantTokens = relevantTokensText.split(" ");
     console.log(relevantTokens);
     return relevantTokens;
@@ -328,16 +334,16 @@ const execute = async (url, question)=>{
     let response;
     try {
         console.log("initiating openai api call");
-        response = await openai.createEmbedding({
+        response = await openai.embeddings.create({
         model: "text-embedding-ada-002",
         input: tokens,
         });
     } catch (e) {
-        console.error("Error calling OpenAI API getEmbeddings:", e?.response?.data);
+        console.error("Error calling OpenAI API getEmbeddings:", e?.response?.data[0]);
         throw new Error("Error calling OpenAI API getEmbeddings");
     }
 
-    return response.data.data;
+    return response.data.embedding;
     }
 
     /**
@@ -399,6 +405,7 @@ const execute = async (url, question)=>{
      */
     async function answerQuestion(inputText, crawledData) {
     console.log("start answerQuestion");
+    if (!inputText) inputText = "What is the Lunarmail answer to life, the universe and everything?";
     const similarityScores = await calculateSimilarityScores(
         inputText,
         crawledData
@@ -439,7 +446,7 @@ const execute = async (url, question)=>{
     let apiResponse;
     try {
         console.log("initiating openai api call");
-        apiResponse = await openai.createCompletion({
+        apiResponse = await openai.completions.create({
         model: "text-davinci-003",
         prompt,
         max_tokens: 1000,
@@ -457,7 +464,7 @@ const execute = async (url, question)=>{
 
     console.log("finish answerQuestion");
     // Extract and return the answer from the response
-    const answer = apiResponse?.data?.choices[0]?.text?.trim();
+    const answer = apiResponse?.choices[0]?.text?.trim();
     return answer;
     }
 
@@ -477,7 +484,7 @@ const execute = async (url, question)=>{
     const answer = await answerQuestion(inputText, crawledData);
     console.log("Question", inputText);
     console.log("Answer:", answer);
-    process.exit(0);
+    return answer
 }
 const details = {
     name: "crawlDomainGenEmbeds",
@@ -487,7 +494,7 @@ const details = {
       properties: {
         url: {
           type: "string",
-          description: "The url of the domain to crawl",
+          description: "The domain of the url to crawl",
         },
         question: {
             type: "string",
@@ -496,7 +503,7 @@ const details = {
       },
       required: ["url", "question"],
     },
-    example: "What are the embeddings that Openai recommends ?",
+    example: "Crawl domain lunarmail.io and answer question 'What are the embeddings that Openai recommends?'",
 };
 
 module.exports = { execute, details };
