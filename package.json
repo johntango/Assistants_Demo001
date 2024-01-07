@@ -20,7 +20,7 @@
     "langchain": "^0.0.214",
     "natural": "^6.10.4",
     "node-html-parser": "^6.1.12",
-    "openai": "^4.17.4",
+    "openai": "^3.2.1",
     "path": "^0.12.7",
     "pupeteer": "^0.0.1",
     "puppeteer": "^19.11.1",

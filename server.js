@@ -5,7 +5,7 @@ const app = express();
 const port = 3000;
 const fs = require('fs');
 const axios = require('axios');
-const OpenAI = require('openai');
+const { Configuration, OpenAIApi }  = require('openai');
 const fileURLToPath = require("url");
 const bodyParser = require('body-parser');
 
@@ -21,10 +21,12 @@ app.use(express.static(__dirname + '/images'));
 console.log("dirname: " + __dirname);
 
 
-
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  const openai = new OpenAIApi(configuration);
 // get OPENAI_API_KEY from GitHub secrets
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-let openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+
 
 // Define global variables focus to keep track of the assistant, file, thread and run
 let focus = { assistant_id: "", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };

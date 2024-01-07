@@ -9,7 +9,7 @@ const { URL } = require( "url");
 const { parse } = require( "node-html-parser");
 const natural = require( "natural");
 const WordTokenizer = natural.WordTokenizer;
-const { OpenAI, OpenAIApi } =require( "openai");
+const { OpenAI, OpenAIApi } = require("openai");
 
 
 const execute = async (url, question)=>{
