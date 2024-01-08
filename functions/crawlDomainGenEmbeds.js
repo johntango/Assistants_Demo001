@@ -488,7 +488,7 @@ const execute = async (domain, question)=>{
 }
 const details = {
     name: "crawlDomainGenEmbeds",
-    description: "Given a url crawlers the domain and generates tokens and embeddings",
+    description: "Given a domain or url to crawl, and a question to answer, it crawls the pages, generates tokens and embeddings, filters the most relevant page and answers the question",
     parameters: {
       type: "object",
       properties: {
