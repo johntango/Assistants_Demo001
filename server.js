@@ -5,7 +5,7 @@ const app = express();
 const port = 3001;
 const fs = require('fs');
 const axios = require('axios');
-const OpenAI  = require('openai');
+const OpenAI = require('openai');
 const fileURLToPath = require("url");
 const bodyParser = require('body-parser');
 
@@ -67,7 +67,7 @@ app.post('/create_assistant', async (req, res) => {
 
 app.post('/modify_assistant', (req, res) => {
     console.log('Modify request received:', req.body);
-    res.status(200).json({ message: 'No Modify action available at present',focus: focus });
+    res.status(200).json({ message: 'No Modify action available at present', focus: focus });
 });
 
 // this lists out all the assistants and extracts the latest assistant id and stores it in focus
@@ -464,58 +464,7 @@ async function getFunctions() {
 
     return openAIFunctions;
 }
-/* 
- // Step 2: check if the model wanted to call a function
-    const toolCalls = responseMessage.tool_calls;
-    if (responseMessage.tool_calls) {
-      // Step 3: call the function
-      // Note: the JSON response may not always be valid; be sure to handle errors
-      const availableFunctions = {
-        get_weather: get_weather,
-      }; // only one function in this example, but you can have multiple
-      messages.push(responseMessage); // extend conversation with assistant's reply
-      for (const toolCall of toolCalls) {
-        const functionName = toolCall.function.name;
-        const functionToCall = availableFunctions[functionName];
-        const functionArgs = JSON.parse(toolCall.function.arguments);
-        const functionResponse = functionToCall(
-          functionArgs.location,
-          functionArgs.unit
-        );
-        messages.push({
-          tool_call_id: toolCall.id,
-          role: "tool",
-          name: functionName,
-          content: functionResponse,
-        }); // extend conversation with function response
-      }
-      const secondResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo-1106",
-        messages: messages,
-      }); // get a new response from the model where it can see the function response
-      return secondResponse.choices;
-    }
-  }
- 
-// submitting tool outputs
-const run = await openai.beta.threads.runs.submitToolOutputs(
-thread.id,
-run.id,
-{
-tool_outputs: [
-  {
-    tool_call_id: callIds[0],
-    output: "22C",
-  },
-  {
-    tool_call_id: callIds[1],
-    output: "LA",
-  },
-],
-}
-);
 
-*/
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
