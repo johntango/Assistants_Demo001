@@ -16,3 +16,11 @@ stored embeddings.  If not it will crawl the web to find the answer.  It will
 then store the answer in the database for future use.  
 You may want to delete crawled_urls.csv and contents.csv to start fresh.
 
+The openweather function is a simple function that uses the openweather API to
+return the weather for a city.  It is a simple example of how to use an API.
+You will need a key from openweather WEATHER_API_KEY to use it.  You can get one for free at
+https://openweathermap.org/api
+
+
+
+
