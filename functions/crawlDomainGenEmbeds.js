@@ -267,20 +267,20 @@ const execute = async (domain, question)=>{
     try {
         console.log("initiating openai api call");
         response = await openai.completions.create({
-        model: "text-davinci-003",
-        prompt,
-        max_tokens: 200,
+        model: "gpt-3.5-turbo-instruct",
+        prompt:prompt,
+        max_tokens: 2000,
         n: 1,
         stop: null,
         temperature: 0.8,
         });
     } catch (e) {
         console.error(
-        "Error calling OpenAI API getRelevantTokens createCompletion:",
+        "Error calling OpenAI API getRelevantTokens completions.create:",
         e?.response?.data?.error
         );
         throw new Error(
-        "Error calling OpenAI API getRelevantTokens createCompletion"
+        "Error calling OpenAI API getRelevantTokens completions.create"
         );
     }
 
@@ -447,8 +447,8 @@ const execute = async (domain, question)=>{
     try {
         console.log("initiating openai api call");
         apiResponse = await openai.completions.create({
-        model: "text-davinci-003",
-        prompt,
+        model: "gpt-3.5-turbo-instruct",
+        prompt:prompt,
         max_tokens: 1000,
         n: 1,
         stop: null,
