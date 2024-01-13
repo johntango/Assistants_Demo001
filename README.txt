@@ -1,4 +1,7 @@
 # Assistant Manager for experiments jrw@mit.edu (email me if you find issues)
+## Thanks to following for their tools 
+## References  developersdigest/OpenAI_Function_Toolkit_And_Library
+## Reference btg5679/javascript-openai-web-crawler 
 ## I am using GitHub Codespaces to develop this. So when you fork 
 ## you may need to change the .devcontainer/devcontainer.json to point to your fork
 ## We are using NPM and Node so run "npm install" to install all the dependencies 
