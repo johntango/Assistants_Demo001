@@ -31,16 +31,19 @@
 ## At present I have a lot of debug messages to the console.  I will remove them in the future.
 ## Also there are messages from GPT that are outputted at the botthom of the page in the green area. 
 ## I give examples of functions you might want to load such as "take screenshot of a web site"
+# OpenWeather function - try "What is the weather in Boston?" 
+## The openweather function is a simple function that uses the openweather API to
+## return the weather for a city.  It is a simple example of how to use an API.
+##You will need a key from openweather WEATHER_API_KEY to use it.  You can get one for free at
+## https://openweathermap.org/api
+
 ## The most sophisticated is the crawlDomain function which will crawl the web to find answers to questions.
+## Try "Crawl the Lunarmail.io web site and answer the question "What products does Lunarmail offer?"
 ## Its  modified from btg5679/javascript-openai-web-crawler  It will answer question if possible from 
-## stored embeddings.  If not it will crawl the web to find the answer.  It will 
-##then store the answer in the database for future use.  
+## stored embeddings.  If not it will crawl the web to find the answer.  It makes use of RAG to embed the question ## ## tokens and compare them to the embeddings of the web pages.  It uses GPT to figure out "Key" tokens in the question. ## It will then use the best match to answer the question.  If it can't find an answer it will use GPT to generate an ## answer.  It will then store the answer in the database for future use. 
+## then store the answer in the database for future use.  
 ## You may want to delete crawled_urls.csv and contents.csv to start fresh.
 
-The openweather function is a simple function that uses the openweather API to
-return the weather for a city.  It is a simple example of how to use an API.
-You will need a key from openweather WEATHER_API_KEY to use it.  You can get one for free at
-https://openweathermap.org/api
 
 
 
