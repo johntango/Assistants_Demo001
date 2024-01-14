@@ -1,15 +1,15 @@
-# Assistant Manager for experiments
+# Assistant Manager Builder Mark 0.0.1
 
 jrw@mit.edu (email me if you find issues)
 Thanks to following for their tools
+
+## YouTube Video https://youtu.be/1dWdqAAOJeY
 
 ## References developersdigest/OpenAI_Function_Toolkit_And_Library
 
 ## Reference btg5679/javascript-openai-web-crawler
 
-We are using GitHub Codespaces to develop this. So when you fork you may need to change the .devcontainer/devcontainer.json to point to your fork
-We are using NPM and Node so run "npm install" to install all the dependencies
-In the future you may need to modify the libraries to use the latest eg puppeteer
+We are using GitHub Codespaces to develop this. So when you fork you may need to change the .devcontainer/devcontainer.json to point to your fork. We are using NPM and Node so run "npm install" to install all the dependencies. In the future you may need to modify the libraries to use the latest eg puppeteer
 Similarly the openai API is changing fairly rapidly so monitor any deprecations of models
 For example a number were deprecated on Jan 4, 2024
 
