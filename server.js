@@ -11,7 +11,7 @@ const bodyParser = require('body-parser');
 
 
 
-let tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
+let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
 //const get_weather = require('./functions/get_weather.js');
 const { get } = require('http');
 
@@ -366,47 +366,91 @@ app.post('/create_message', async (req, res) => {
     }
 });
 
-async function get_run_status(thread_id, run_id) {
-    try {
-        let intervalId = setInterval(async () => {
-            let response = await openai.beta.threads.runs.retrieve(thread_id, run_id)
-            focus.status = await response.status;
-            console.log("run status response: " + JSON.stringify(response));
-            if (focus.status === "completed") {
-                clearInterval(intervalId); // Stop polling when status is completed
-            }
-            await console.log("run status response: " + response.status)
-        }, 500); // Poll every 1 second
-        // now get the messages
-        let messages = await openai.beta.threads.messages.list(thread_id)
-        console.log("get_run_status messages: " + JSON.stringify(messages.data));
-        return messages;
-    }
-    catch (error) {
-        console.log(error);
-        return error;
-    }
-}
 app.post('/get_messages', async (req, res) => {
-    let thread_id = req.body.thread_id;
-    let run_id = req.body.run_id;
+    let thread_id = focus.thread_id;
+    let run_id = focus.run_id;
     console.log("get_messages: on thread_id: " + thread_id + " run_id: " + run_id);
     try {
-        let messages = await get_run_status(thread_id, run_id);
-        console.log("PRINTING MESSAGES: ");
-        console.log(messages.data[0].content[0].text.value)
-        focus.status = "completed";
-        res.status(200).json({ message: messages.data[0].content[0].text.value, focus: focus });
+       
+        await get_run_status(thread_id, run_id);
+        // now retrieve the messages
+        let response = await openai.beta.threads.messages.list(thread_id)
+        let all_messages = get_all_messages(response);
+        res.status(200).json({ message: all_messages, focus: focus });
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ message: 'Get messages failed' });
     }
 });
+function get_all_messages(response){
+    let all_messages = [];
+    let role = "";
+    let content = "";
+    for (let message of response.data) {
+        // pick out role and content
+        role = message.role;
+        content = message.content[0].text.value;
+        all_messages.push({role, content});
+    }
+    return all_messages
+}
+//
+// this puts a message onto a thread and then runs the assistant 
+async function runAssistant(assistant_id,thread_id,user_instructions){
+    try {
+        await openai.beta.threads.messages.create(thread_id,
+            {
+                role: "user",
+                content: user_instructions,
+            })
+        let run = await openai.beta.threads.runs.create(thread_id, {
+            assistant_id: assistant_id
+        })
+        run_id = run.id;
+        focus.run_id = run_id;
+        focus.assistant_id = assistant_id;
+        focus.thread_id = thread_id;
+        await get_run_status(thread_id, run_id); // blocks until run is completed
+        // now retrieve the messages
+        let response = await openai.beta.threads.messages.list(thread_id)
+        return get_all_messages(response);
+        
+    }
+    catch (error) {
+        console.log(error);
+        return error;
+    }
+}
+async function get_run_status(thread_id, run_id) {
+    try {
+        let response = await openai.beta.threads.runs.retrieve(thread_id, run_id)
+        let message = response;
+        focus.status = response.status;
+        let tries = 0;
+        while (response.status == 'in_progress' && tries < 10) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 1 second
+            response = await openai.beta.threads.runs.retrieve(thread_id, run_id);
+            tries += 1;
+        }
+        if (response.status === "requires_action") {
+            get_and_run_tool(response);
+        }
+        
+        if (response.status == "completed" || response.status == "failed") {
+            
+        }
+        // await openai.beta.threads.del(thread_id)
+        return
+    }
+    catch (error) {
+        console.log(error);
+        return error; 
+    }
+}
 
 // some code that might be useful
 //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
-
 
 app.post('/list_tools', async (req, res) => {
     let assistant_id = req.body.assistant_id;
@@ -415,18 +459,17 @@ app.post('/list_tools', async (req, res) => {
     let tools = [];
     keys = Object.keys(functions);
     for (let key of keys) {
-        tools.push({ type: "function", function: functions[key].details })
+        tools.push({ role: "function", function: functions[key].details })
     }
 
-    const assistant = await openai.beta.assistants.update(
+    const response = await openai.beta.assistants.update(
         assistant_id,
         { tools: tools }
     )
-    let response = await assistant;
     console.log("assistant tools updated: " + JSON.stringify(response));
-    focus.func_name = "get_weather";
-    res.status(200).json({ message: response, focus: focus });
-})
+    focus.func_name = "crawlDomainGenEmbeds";
+    res.status(200).json({ message: tools, focus: focus });
+});
 
 app.post('/run_function', async (req, res) => {
     // Step 1: send the conversation and available functions to the model
