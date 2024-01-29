@@ -54,9 +54,59 @@
       }
 
       function write_to_div(route, message) {
-        console.log(`message in Write to Div: ${JSON.stringify(message)}`);
-        let div = document.getElementById("response");
-        div.innerHTML = JSON.stringify(message);
+        // Ensure response is a valid array;
+        if (!Array.isArray(message)) {
+          let responseDiv = document.getElementById("response");
+          responseDiv.innerHTML = JSON.stringify(message);
+          return;
+        }
+
+        // Select the target div
+        let responseDiv = document.getElementById("response");
+        if (!responseDiv) {
+          console.error("No div with id 'response' found.");
+          return;
+        }
+
+        // Clear previous contents
+        responseDiv.innerHTML = "";
+
+        // Iterate through each object in the array
+        message.forEach((item) => {
+          // Create a new span element for each item
+          var span = document.createElement("span");
+
+          // check if item.content or item.function
+          if ("content" in item) span.textContent = item.content;
+          // check if item.function exists
+          if ("function" in item) {
+            span.textContent = JSON.stringify(item.function);
+          } else {
+            span.textContent = JSON.stringify(item);
+          }
+
+          // Assign color based on the role
+          switch (item.role) {
+            case "user":
+              span.style.color = "green";
+              break;
+            case "assistant":
+              span.style.color = "blue";
+              break;
+            case "system":
+              span.style.color = "red";
+              break;
+            case "function":
+              span.style.color = "purple";
+              break;
+            default:
+              span.style.color = "black"; // Default color
+          }
+
+          // Append the span to the div
+          responseDiv.appendChild(span);
+          responseDiv.appendChild(document.createElement("br")); // Add a line break for readability
+        });
       }
       async function sendRequest(route) {
         get_data_from_elements();
