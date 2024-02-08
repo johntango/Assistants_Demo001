@@ -28,6 +28,7 @@
     <script>
       let data = {
         assistant_id: "",
+        assistant_name: "",
         file_id: "",
         thread_id: "",
         message: "",
@@ -38,6 +39,7 @@
 
       function get_data_from_elements() {
         data.assistant_id = document.getElementById("assistant_id").value;
+        data.assistant_name = document.getElementById("assistant_name").value;
         data.file_id = document.getElementById("file_id").value;
         data.thread_id = document.getElementById("thread_id").value;
         data.message = document.getElementById("message").value;
@@ -46,6 +48,7 @@
       }
       function write_data_to_elements(data) {
         document.getElementById("assistant_id").value = data.assistant_id;
+        document.getElementById("assistant_name").value = data.assistant_name;
         document.getElementById("file_id").value = data.file_id;
         document.getElementById("thread_id").value = data.thread_id;
         document.getElementById("message").value = data.message;
@@ -165,10 +168,11 @@
         <button
           class="btn btn-primary mr-1"
           type="submit"
-          onclick="sendRequest('modify_assistant')"
+          onclick="sendRequest('get_assistant')"
         >
-          Modify
+          Get Assistant by Name
         </button>
+        <input type="text" id="assistant_name" name="assistant_name" />
         <button
           class="btn btn-primary mr-1"
           type="submit"

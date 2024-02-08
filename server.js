@@ -1,4 +1,5 @@
 
+
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -8,10 +9,12 @@ const axios = require('axios');
 const OpenAI = require('openai');
 const fileURLToPath = require("url");
 const bodyParser = require('body-parser');
+//const sqlite3 = require('sqlite3');
 
 
-
-let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
+let assistants = {}
+//let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
+let tools = [];
 //const get_weather = require('./functions/get_weather.js');
 const { get } = require('http');
 
@@ -25,9 +28,14 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+// connect to db and get cursor
+// Example usage:
+//const dbPath = 'data/prompts.db';
+//const db = getConnection(dbPath);
 
 // Define global variables focus to keep track of the assistant, file, thread and run
-let focus = { assistant_id: "", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
+let focus = { assistant_id: "", assistant_name:"", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
+
 
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
@@ -38,36 +46,105 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/index.html'));
 });
+//
+// Run 
+app.post('/run_assistant', async (req, res) => {
+    let name = "strategy";  // we could get this from req.body
+    let instructions = req.body.message;
+    if(tools.length < 2){
+    //tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
+    }
+    // this puts a message onto a thread and then runs the assistant on that thread
+    let run_id;
+    let messages = [];  // this accumulates messages from the assistant
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+    let assistant = await create_or_get_assistant(name);
+    let thread = await create_or_get_thread()
+   
+    focus.assistant_id = assistant.id;
+    focus.thread_id = thread.id;
+    focus.assistant_name = assistant.name;
+    messages = await runAssistant(focus.assistant_id, focus.thread_id, instructions);
+    res.status(200).json({ message: messages, focus: focus });
+});
 
-// Define routes
-app.post('/create_assistant', async (req, res) => {
-    tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
-    try {
-        let response = await openai.beta.assistants.create({
-            name: "Test Assistant",
-            instructions:
-                "You are a personal share price tutor. Write and run code to answer financial questions.",
+async function create_or_get_assistant(name,instructions){
+    const response = await openai.beta.assistants.list({
+        order: "desc",
+        limit: 10,
+    })
+    // loop over all assistants and find the one with the name name
+    let assistant = {};
+    for(obj in response.data){
+        assistant = response.data[obj];
+        // change assistant.name to small letters
+        if(assistant.name.toLowerCase() == name){
+            focus.assistant_id = assistant.id;
+            tools = assistant.tools;  // get the tool
+            break
+        }
+    }
+    if(focus.assistant_id == ""){
+        assistant = await openai.beta.assistants.create({
+            name: name,
+            instructions:instructions,
             tools: tools,
             model: "gpt-4-1106-preview",
         });
+        focus.assistant_id = assistant.id
+        focus.assistant_name = name;
+    }
+    return assistant;
+}
+async function create_or_get_thread(){
+    let response = {}
+    if(focus.thread_id == ""){
+        // do we need an intitial system message on the thread?
+        response = await openai.beta.threads.create(
+            /*messages=[
+            {
+              "role": "user",
+              "content": "Create data visualization based on the trends in this file.",
+              "file_ids": [focus.file_id]
+            }
+          ]*/
+        )
+        focus.thread_id = response.id;
+    }
+    return response;
+}
+    
 
-        // Log the first greeting
-        console.log(
-            "\nHello there, I'm your personal share price tutor. Ask some questions.\n"
-        );
-        focus.assistant_id = await response.id;
-        message = "Assistant created with id: " + response.id;
+// Define routes
+app.post('/create_assistant', async (req, res) => {
+    // we should define the system message for the assistant in the input
+    let system_message = req.body.system_message;
+    let name = req.body.assistant_name;
+    let instruction = "you are a helpful tool calling assistnt."
+    try {
+        let assistant = await create_or_get_assistant(name,instruction);
+        let assistant_id = assistant.id;
+
+        message = "Assistant created with id: " + assistant_id;
         res.status(200).json({ message: message, focus: focus });
     }
     catch (error) {
         return console.error('Error:', error);
     }
 }
-);
+)
 
-app.post('/modify_assistant', (req, res) => {
+app.post('/get_assistant', async (req, res) => {
+    let name = req.body.assistant_name;
+    let instruction = "";
+    let assistant = await create_or_get_assistant(name,instruction);
+    focus.assistant_name = assistant.name;
+    focus.assistant_id = assistant.id;
     console.log('Modify request received:', req.body);
-    res.status(200).json({ message: 'No Modify action available at present', focus: focus });
+    let message = `got Assistant ${name} :` + JSON.stringify(assistant);
+    res.status(200).json({ message: message, focus: focus });
 });
 
 // this lists out all the assistants and extracts the latest assistant id and stores it in focus
@@ -88,10 +165,13 @@ app.post('/list_assistants', async (req, res) => {
 })
 function extract_assistant_id(data) {
     let assistant_id = "";
-    let tools = []
     if (data.length > 0) {
         assistant_id = data[0].id;
         tools = data[0].tools
+        // loop over assistants and extract all the assistants into a dictionary
+        for (let assistant of data) {
+            assistants[assistant.name] = assistant;
+        }
     }
 
     console.log("got assistant_id: " + assistant_id);
@@ -284,52 +364,60 @@ app.post('/run_status', async (req, res) => {
         let response = await openai.beta.threads.runs.retrieve(thread_id, run_id)
         message = response;
         focus.status = response.status;
-        if (response.status === "requires_action") {
-
-            console.log("run status response: " + JSON.stringify(message));
-            // extract function to be called from response
-            const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
-            let toolOutputs = []
-            let functions_available = await getFunctions();
-            for (let toolCall of toolCalls) {
-                console.log("toolCall: " + JSON.stringify(toolCall));
-                functionName = toolCall.function.name;
-                // get function from functions_available
-                let functionToExecute = functions_available[`${functionName}`];
-
-                if (functionToExecute.execute) {
-                    let args = JSON.parse(toolCall.function.arguments);
-                    let argsArray = Object.keys(args).map((key) => args[key]);
-                    let functionResponse = await functionToExecute.execute(...argsArray);
-                    toolOutputs.push({
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify(functionResponse)
-                    });
-                    let text = JSON.stringify({ message: `function ${functionName} called`, focus: focus });
-                    res.write(text);
-                    await openai.beta.threads.runs.submitToolOutputs(
-                        thread_id,
-                        run_id,
-                        {
-                            tool_outputs: toolOutputs
-                        }
-                    );
-                }
-                continue;
-            }
-            // now continue polling for status 
+        let tries = 0;
+        while (response.status == 'in_progress' && tries < 10) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 1 second
+            response = await openai.beta.threads.runs.retrieve(thread_id, run_id);
+            tries += 1;
         }
+        if (response.status === "requires_action") {
+           get_and_run_tool(response);
+        }
+        
         if (response.status == "completed" || response.status == "failed") {
             let message = "Completed run with status: " + response.status;
             res.status(200).json({ message: message, focus: focus });
         }
+
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ message: 'Run Status failed' }, focus);
     }
 })
+// requires action is a special case where we need to call a function
+async function get_and_run_tool(response){
+    let thread_id = focus.thread_id;
+    // extract function to be called from response
+    const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
+    let toolOutputs = []
+    let functions_available = await getFunctions();
+    for (let toolCall of toolCalls) {
+        console.log("toolCall: " + JSON.stringify(toolCall));
+        functionName = toolCall.function.name;
+        // get function from functions_available
+        let functionToExecute = functions_available[`${functionName}`];
 
+        if (functionToExecute.execute) {
+            let args = JSON.parse(toolCall.function.arguments);
+            let argsArray = Object.keys(args).map((key) => args[key]);
+            let functionResponse = await functionToExecute.execute(...argsArray);
+            toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify(functionResponse)
+            });
+            let text = JSON.stringify({ message: `function ${functionName} called`, focus: focus });
+            await openai.beta.threads.runs.submitToolOutputs(
+                thread_id,
+                run_id,
+                {
+                    tool_outputs: toolOutputs
+                }
+            );
+        }
+        continue;
+    }
+}
 
 app.post('/delete_run', async (req, res) => {
     let thread_id = req.body.thread_id;
@@ -356,7 +444,7 @@ app.post('/create_message', async (req, res) => {
                 role: "user",
                 content: prompt,
             })
-        message = await response;;
+        message = await response;
         console.log("create message response: " + JSON.stringify(response));
         res.status(200).json({ message: message, focus: focus });
     }
@@ -365,6 +453,7 @@ app.post('/create_message', async (req, res) => {
         res.status(500).json({ message: 'Create  Message failed' });
     }
 });
+
 
 app.post('/get_messages', async (req, res) => {
     let thread_id = focus.thread_id;
@@ -428,7 +517,7 @@ async function get_run_status(thread_id, run_id) {
         let message = response;
         focus.status = response.status;
         let tries = 0;
-        while (response.status == 'in_progress' || response.status =="queued" && tries < 10) {
+        while (response.status == 'in_progress' && tries < 10) {
             await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 1 second
             response = await openai.beta.threads.runs.retrieve(thread_id, run_id);
             tries += 1;
@@ -449,27 +538,71 @@ async function get_run_status(thread_id, run_id) {
     }
 }
 
+
+//
+// add all messages to array
+//
+function addLastMessagetoArray(message, messages){
+    if(message !== undefined){
+        role = message.data[0].role;
+        content = message.data[0].content[0].text.value;
+        messages.push({role, content});
+    }
+}
+
+
+
+app.post('/loop', async (req, res) => {
+    let thread_id = focus.thread_id;
+    let writer = assistants.Writer;
+    let critic = assistants.Critic;
+    let messages = [];
+    try {
+        // Run the Writer Assistant to create a first draft                      
+        await runAssistant(writer.id,thread_id,"Write a paragraph about a king and his gaudy clothes")
+        await get_run_status(thread_id, focus.run_id,messages)
+  
+        // Run the Critic Assistant to provide feedback 
+        await runAssistant(critic.id,thread_id,`Provide constructive feedback to what the Writer assistant has written`)
+        await get_run_status(thread_id, focus.run_id, messages)
+        
+        // Have the Writer Assistant rewrite the first chapter based on the feedback from the Critic        
+        await runAssistant(writer.id,thread_id,`Using the feedback from the Critic Assistant rewrite the first chapter given here: ${messages[0]}`)
+        await get_run_status(thread_id, focus.run_id, messages)
+
+        // create one message with all the messages input to the thread
+        let textMessage = messages.join("\n")
+
+        res.status(200).json({ message: JSON.stringify(textMessage), focus: focus })
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Get messages failed' });
+    }
+});
 // some code that might be useful
 //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
 
+
 app.post('/list_tools', async (req, res) => {
-    let assistant_id = req.body.assistant_id;
+    let assistant_id = focus.assistant_id;
     let functions = await getFunctions();
     // I want to loop over dictionary called functions and create a tools array
-    let tools = [];
+    let local_tools = [];
     keys = Object.keys(functions);
     for (let key of keys) {
-        tools.push({ role: "function", function: functions[key].details })
+        local_tools.push({ role: "function", function: functions[key].details })
     }
+    // add the tools to the assistant if they are not already there
 
     const response = await openai.beta.assistants.update(
         assistant_id,
-        { tools: tools }
+        { tools: local_tools }
     )
-    console.log("assistant tools updated: " + JSON.stringify(response));
+    console.log("assistant with tools updated: " + JSON.stringify(response));
     focus.func_name = "crawlDomainGenEmbeds";
     res.status(200).json({ message: tools, focus: focus });
-});
+})
 
 app.post('/run_function', async (req, res) => {
     // Step 1: send the conversation and available functions to the model
@@ -508,6 +641,44 @@ async function getFunctions() {
     return openAIFunctions;
 }
 
+app.post('/table', (req, res) => {
+    const sql = "SELECT * FROM prompts";
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            throw err;
+        }
+        rows.forEach((row) => {
+            console.log(row);
+        });
+        res.status(200).json({ message: JSON.stringify(rows), focus: focus });
+        //res.render('table', { rows });
+    });
+  });
+
+  
+  //this is where we write to the database
+  function insertIntoTable(db, data) {
+    const sql = `
+        INSERT INTO prompts (topic, sentiment, style, tone, language, prompt, response) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    db.run(sql, [data.topic, data.sentiment, data.style, data.tone, data.language, data.prompt, data.response], function(err) {
+        if (err) {
+            return console.error("Error inserting data:", err.message);
+        }
+        console.log(`Row inserted with ID: ${this.lastID}`);
+    });
+  }
+  
+  function getConnection(dbPath) {
+    return new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+            console.error("Error connecting to the database:", err.message);
+        } else {
+            console.log("Connected to the SQLite database.");
+        }
+    });
+  }
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
