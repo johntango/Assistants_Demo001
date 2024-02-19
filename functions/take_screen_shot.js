@@ -1,10 +1,10 @@
 const { PuppeteerWebBaseLoader } = require("langchain/document_loaders/web/puppeteer");
-const fs = require( "fs");
+const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
 const puppeteer = require("puppeteer");
 
-const execute = async (url ) => {
+const execute = async (url) => {
   try {
     //const websiteName = new URL(url).hostname;
     const websiteName = new URL(url).hostname;
@@ -46,7 +46,6 @@ const execute = async (url ) => {
 
 const details = {
   "name": "take_screen_shot",
-  "description": "Take a screenshot of a website",
   "parameters": {
     "type": "object",
     "properties": {
@@ -57,7 +56,7 @@ const details = {
     },
     "required": ["url"]
   },
-  "example": "Take a screenshot of the amazon homepage"
+  "description": "Take a screenshot of the homepage"
 }
 
 module.exports = { execute, details };

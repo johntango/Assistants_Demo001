@@ -1,4 +1,4 @@
-const fs = require( "fs");
+const fs = require("fs");
 const path = require("path");
 
 const execute = async (city) => {
@@ -11,16 +11,15 @@ const execute = async (city) => {
   const url = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${key}`
   const response = await fetch(url);
   let data = await response.json();
-  console.log("Lat,Loncle:"+JSON.stringify(data))
+  console.log("Lat,Loncle:" + JSON.stringify(data))
   let lat = data[0]["lat"];
   let lon = data[0]["lon"];
-  return {city: city, lat: lat, lon: lon}
+  return { city: city, lat: lat, lon: lon }
 
 }
 
 const details = {
   "name": "get_city_latlon",
-  "description": "Given city get the lat, lon location",
   "parameters": {
     "type": "object",
     "properties": {
@@ -35,7 +34,7 @@ const details = {
     },
     "required": ["city"]
   },
-  "example": "Find the lat/lon of a city with the name 'Tokyo, Japan'"
+  "description": "Given city get the lat, lon location",
 };
 
 module.exports = { execute, details };

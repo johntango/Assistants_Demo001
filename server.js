@@ -34,7 +34,7 @@ const openai = new OpenAI({
 //const db = getConnection(dbPath);
 
 // Define global variables focus to keep track of the assistant, file, thread and run
-let focus = { assistant_id: "", assistant_name:"", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
+let focus = { assistant_id: "", assistant_name: "", file_id: "", thread_id: "", message: "", func_name: "", run_id: "", status: "" };
 
 
 // Middleware to parse JSON payloads in POST requests
@@ -51,8 +51,8 @@ app.get('/', (req, res) => {
 app.post('/run_assistant', async (req, res) => {
     let name = req.body.assistant_name;
     let instructions = req.body.message;
-    if(tools.length < 2){
-    //tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
+    if (tools.length < 2) {
+        //tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
     }
     // this puts a message onto a thread and then runs the assistant on that thread
     let run_id;
@@ -62,7 +62,7 @@ app.post('/run_assistant', async (req, res) => {
     });
     let assistant = await create_or_get_assistant(name);
     let thread = await create_or_get_thread()
-   
+
     focus.assistant_id = assistant.id;
     focus.thread_id = thread.id;
     focus.assistant_name = assistant.name;
@@ -70,26 +70,26 @@ app.post('/run_assistant', async (req, res) => {
     res.status(200).json({ message: messages, focus: focus });
 });
 
-async function create_or_get_assistant(name,instructions){
+async function create_or_get_assistant(name, instructions) {
     const response = await openai.beta.assistants.list({
         order: "desc",
         limit: 10,
     })
     // loop over all assistants and find the one with the name name
     let assistant = {};
-    for(obj in response.data){
+    for (obj in response.data) {
         assistant = response.data[obj];
         // change assistant.name to small letters
-        if(assistant.name.toLowerCase() == name.toLowerCase()){
+        if (assistant.name.toLowerCase() == name.toLowerCase()) {
             focus.assistant_id = assistant.id;
             tools = assistant.tools;  // get the tool
             break
         }
     }
-    if(focus.assistant_id == ""){
+    if (focus.assistant_id == "") {
         assistant = await openai.beta.assistants.create({
             name: name,
-            instructions:instructions,
+            instructions: instructions,
             tools: tools,
             model: "gpt-4-1106-preview",
         });
@@ -98,9 +98,9 @@ async function create_or_get_assistant(name,instructions){
     }
     return assistant;
 }
-async function create_or_get_thread(){
+async function create_or_get_thread() {
     let response = {}
-    if(focus.thread_id == ""){
+    if (focus.thread_id == "") {
         // do we need an intitial system message on the thread?
         response = await openai.beta.threads.create(
             /*messages=[
@@ -115,7 +115,7 @@ async function create_or_get_thread(){
     }
     return response;
 }
-    
+
 
 // Define routes
 app.post('/create_assistant', async (req, res) => {
@@ -124,7 +124,7 @@ app.post('/create_assistant', async (req, res) => {
     let name = req.body.assistant_name;
     let instruction = "you are a helpful tool calling assistnt."
     try {
-        let assistant = await create_or_get_assistant(name,instruction);
+        let assistant = await create_or_get_assistant(name, instruction);
         let assistant_id = assistant.id;
 
         message = "Assistant created with id: " + assistant_id;
@@ -139,7 +139,7 @@ app.post('/create_assistant', async (req, res) => {
 app.post('/get_assistant', async (req, res) => {
     let name = req.body.assistant_name;
     let instruction = "";
-    let assistant = await create_or_get_assistant(name,instruction);
+    let assistant = await create_or_get_assistant(name, instruction);
     focus.assistant_name = assistant.name;
     focus.assistant_id = assistant.id;
     console.log('Modify request received:', req.body);
@@ -371,9 +371,9 @@ app.post('/run_status', async (req, res) => {
             tries += 1;
         }
         if (response.status === "requires_action") {
-           get_and_run_tool(response);
+            get_and_run_tool(response);
         }
-        
+
         if (response.status == "completed" || response.status == "failed") {
             let message = "Completed run with status: " + response.status;
             res.status(200).json({ message: message, focus: focus });
@@ -386,7 +386,7 @@ app.post('/run_status', async (req, res) => {
     }
 })
 // requires action is a special case where we need to call a function
-async function get_and_run_tool(response){
+async function get_and_run_tool(response) {
     let thread_id = focus.thread_id;
     let run_id = focus.run_id;
     // extract function to be called from response
@@ -461,7 +461,7 @@ app.post('/get_messages', async (req, res) => {
     let run_id = focus.run_id;
     console.log("get_messages: on thread_id: " + thread_id + " run_id: " + run_id);
     try {
-       
+
         await get_run_status(thread_id, run_id);
         // now retrieve the messages
         let response = await openai.beta.threads.messages.list(thread_id)
@@ -473,7 +473,7 @@ app.post('/get_messages', async (req, res) => {
         res.status(500).json({ message: 'Get messages failed' });
     }
 });
-function get_all_messages(response){
+function get_all_messages(response) {
     let all_messages = [];
     let role = "";
     let content = "";
@@ -481,13 +481,13 @@ function get_all_messages(response){
         // pick out role and content
         role = message.role;
         content = message.content[0].text.value;
-        all_messages.push({role, content});
+        all_messages.push({ role, content });
     }
     return all_messages
 }
 //
 // this puts a message onto a thread and then runs the assistant 
-async function runAssistant(assistant_id,thread_id,user_instructions){
+async function runAssistant(assistant_id, thread_id, user_instructions) {
     try {
         await openai.beta.threads.messages.create(thread_id,
             {
@@ -505,7 +505,7 @@ async function runAssistant(assistant_id,thread_id,user_instructions){
         // now retrieve the messages
         let response = await openai.beta.threads.messages.list(thread_id)
         return get_all_messages(response);
-        
+
     }
     catch (error) {
         console.log(error);
@@ -526,16 +526,16 @@ async function get_run_status(thread_id, run_id) {
         if (response.status === "requires_action") {
             get_and_run_tool(response);
         }
-        
+
         if (response.status == "completed" || response.status == "failed") {
-            
+
         }
         // await openai.beta.threads.del(thread_id)
         return
     }
     catch (error) {
         console.log(error);
-        return error; 
+        return error;
     }
 }
 
@@ -543,11 +543,11 @@ async function get_run_status(thread_id, run_id) {
 //
 // add all messages to array
 //
-function addLastMessagetoArray(message, messages){
-    if(message !== undefined){
+function addLastMessagetoArray(message, messages) {
+    if (message !== undefined) {
         role = message.data[0].role;
         content = message.data[0].content[0].text.value;
-        messages.push({role, content});
+        messages.push({ role, content });
     }
 }
 
@@ -560,15 +560,15 @@ app.post('/loop', async (req, res) => {
     let messages = [];
     try {
         // Run the Writer Assistant to create a first draft                      
-        await runAssistant(writer.id,thread_id,"Write a paragraph about a king and his gaudy clothes")
-        await get_run_status(thread_id, focus.run_id,messages)
-  
-        // Run the Critic Assistant to provide feedback 
-        await runAssistant(critic.id,thread_id,`Provide constructive feedback to what the Writer assistant has written`)
+        await runAssistant(writer.id, thread_id, "Write a paragraph about a king and his gaudy clothes")
         await get_run_status(thread_id, focus.run_id, messages)
-        
+
+        // Run the Critic Assistant to provide feedback 
+        await runAssistant(critic.id, thread_id, `Provide constructive feedback to what the Writer assistant has written`)
+        await get_run_status(thread_id, focus.run_id, messages)
+
         // Have the Writer Assistant rewrite the first chapter based on the feedback from the Critic        
-        await runAssistant(writer.id,thread_id,`Using the feedback from the Critic Assistant rewrite the first chapter given here: ${messages[0]}`)
+        await runAssistant(writer.id, thread_id, `Using the feedback from the Critic Assistant rewrite the first chapter given here: ${messages[0]}`)
         await get_run_status(thread_id, focus.run_id, messages)
 
         // create one message with all the messages input to the thread
@@ -587,23 +587,68 @@ app.post('/loop', async (req, res) => {
 
 app.post('/list_tools', async (req, res) => {
     let assistant_id = focus.assistant_id;
-    let functions = await getFunctions();
+    const functions = await getFunctions();
     // I want to loop over dictionary called functions and create a tools array
+    /*let mytool = {
+        "type": "function", "function": {
+            "name": "writer_tool",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the assistant to use. eg writer"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "description": "The instructions to the assistant. eg Write a story about a dog"
+                    }
+                },
+                "required": [
+                    "name",
+                    "instructions"
+                ]
+            },
+            "description": "This is a fiction writer that can write stories based on instructions"
+        }
+    };
+*/
     let local_tools = [];
+    //local_tools.push(mytool);
+
     keys = Object.keys(functions);
     for (let key of keys) {
-        local_tools.push({ role: "function", function: functions[key].details })
+        let details = functions[key].details;
+        local_tools.push({ "type": "function", "function": details })
     }
+
     // add the tools to the assistant if they are not already there
 
     const response = await openai.beta.assistants.update(
         assistant_id,
-        { tools: local_tools }
+        { "tools": local_tools }
     )
     console.log("assistant with tools updated: " + JSON.stringify(response));
-    focus.func_name = "crawlDomainGenEmbeds";
-    res.status(200).json({ message: tools, focus: focus });
+    //focus.func_name = "crawlDomainGenEmbeds";
+    res.status(200).json({ message: JSON.stringify(response), focus: focus });
 })
+async function getFunctions() {
+    const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
+    const openAIFunctions = {};
+
+    for (const file of files) {
+        if (file.endsWith(".js")) {
+            const moduleName = file.slice(0, -3);
+            const modulePath = `./functions/${moduleName}.js`;
+            const { details } = await import(modulePath);
+
+            openAIFunctions[moduleName] = {
+                "details": details
+            };
+        }
+    }
+    return openAIFunctions;
+};
 
 app.post('/run_function', async (req, res) => {
     // Step 1: send the conversation and available functions to the model
@@ -621,26 +666,6 @@ app.post('/run_function', async (req, res) => {
     res.status(200).json({ message: responseMessage, focus: focus });
 
 });
-async function getFunctions() {
-    const files = fs.readdirSync(path.resolve(__dirname, "./functions"));
-    const openAIFunctions = {};
-
-    for (const file of files) {
-        if (file.endsWith(".js")) {
-            const moduleName = file.slice(0, -3);
-            const modulePath = `./functions/${moduleName}.js`;
-            // get the two const values from the file
-            const { execute, details } = require(`${modulePath}`);
-
-            openAIFunctions[moduleName] = {
-                execute,
-                details
-            };
-        }
-    }
-
-    return openAIFunctions;
-}
 
 app.post('/table', (req, res) => {
     const sql = "SELECT * FROM prompts";
@@ -654,24 +679,24 @@ app.post('/table', (req, res) => {
         res.status(200).json({ message: JSON.stringify(rows), focus: focus });
         //res.render('table', { rows });
     });
-  });
+});
 
-  
-  //this is where we write to the database
-  function insertIntoTable(db, data) {
+
+//this is where we write to the database
+function insertIntoTable(db, data) {
     const sql = `
         INSERT INTO prompts (topic, sentiment, style, tone, language, prompt, response) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    db.run(sql, [data.topic, data.sentiment, data.style, data.tone, data.language, data.prompt, data.response], function(err) {
+    db.run(sql, [data.topic, data.sentiment, data.style, data.tone, data.language, data.prompt, data.response], function (err) {
         if (err) {
             return console.error("Error inserting data:", err.message);
         }
         console.log(`Row inserted with ID: ${this.lastID}`);
     });
-  }
-  
-  function getConnection(dbPath) {
+}
+
+function getConnection(dbPath) {
     return new sqlite3.Database(dbPath, (err) => {
         if (err) {
             console.error("Error connecting to the database:", err.message);
@@ -679,7 +704,7 @@ app.post('/table', (req, res) => {
             console.log("Connected to the SQLite database.");
         }
     });
-  }
+}
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

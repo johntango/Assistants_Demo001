@@ -20,7 +20,6 @@ const execute = async (name) => {
    
 const details = {
     "name": "get_country",
-    "description": "Given a name, return the country of origin",
     "parameters": {
       "type": "object",
       "properties": {
@@ -31,6 +30,6 @@ const details = {
       },
       "required": ["name"]
     },
-    "example": "Find the country of origin of a person with the name 'Jesus'"
+    "description": "Given a name, return the country of origin",
 };
 module.exports = { execute, details };

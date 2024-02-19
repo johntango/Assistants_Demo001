@@ -1,11 +1,11 @@
 const { PuppeteerWebBaseLoader } = require("langchain/document_loaders/web/puppeteer");
-const fs = require( "fs");
+const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
 const puppeteer = require("puppeteer");
 
 const execute = async (options) => {
-  const url  = options;
+  const url = options;
   try {
     const websiteName = new URL(url).hostname;
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -38,19 +38,18 @@ const execute = async (options) => {
   }
 };
 const details = {
-    "name": "scrape_website",
-    "description": "Scrape the HTML of a website",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "url": {
-          "type": "string",
-          "description": "The URL of the website to scrape the HTML"
-        }
-      },
-      "required": ["url"]
+  "name": "scrape_website",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "description": "The URL of the website to scrape the HTML"
+      }
     },
-    "example": "Scrape the HTML for Google"
+    "required": ["url"]
+  },
+  "description": "Scrape the HTML of a website"
 };
 
 module.exports = { execute, details };
