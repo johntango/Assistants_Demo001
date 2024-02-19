@@ -11,7 +11,7 @@ const natural = require( "natural");
 const WordTokenizer = natural.WordTokenizer;
 const { OpenAI  } = require("openai");
 
-
+const MAXCOUNT = 10;
 const execute = async (domain, question)=>{
  
     dotenv.config();
@@ -154,11 +154,12 @@ const execute = async (domain, question)=>{
     const queue = [startingUrl];
     const visitedUrls = new Set([startingUrl]);
     const tokenizedContents = [];
-
+    let counter = 0;
     // Continue crawling until the queue is empty
-    while (queue?.length > 0) {
+    while (queue?.length > 0 && counter < MAXCOUNT) {
         // Get the next URL from the queue
         const currentUrl = queue.shift();
+        counter++;
 
         console.log("Crawling:", currentUrl);
 
@@ -168,6 +169,7 @@ const execute = async (domain, question)=>{
         let htmlContent;
         try {
             response = await axios.get(currentUrl);
+            //response = await fetch(currentUrl);
             htmlContent = response.data;
         } catch (e) {
             console.error("Error fetching URL:", currentUrl);
@@ -335,8 +337,9 @@ const execute = async (domain, question)=>{
     try {
         console.log("initiating openai api call");
         response = await openai.embeddings.create({
-        model: "text-embedding-ada-002",
+        model: "text-embedding-3-small",
         input: tokens,
+        embedding_format: "float"
         });
     } catch (e) {
         console.error("Error calling OpenAI API getEmbeddings:", e?.response?.data[0]);
@@ -437,7 +440,7 @@ const execute = async (domain, question)=>{
     let prompt;
     if (strippedContent.length > availableTokens) {
         // cut the string to fit available tokens
-        prompt = `Answer the question based on the context below, and if the question can't be answered based on the context, say "I don't know"\n\nContext: ${strippedContent.slice(0, availableTokens)}\n\n---\n\nQuestion: ${inputText}\nAnswer:`;
+        prompt = `Answer the question based on the context below, and if the question can't be answered based on the context, make a guess"\n\nContext: ${strippedContent.slice(0, availableTokens)}\n\n---\n\nQuestion: ${inputText}\nAnswer:`;
     } else {
         prompt = promptStart;
     }
@@ -449,7 +452,7 @@ const execute = async (domain, question)=>{
         apiResponse = await openai.completions.create({
         model: "gpt-3.5-turbo-instruct",
         prompt:prompt,
-        max_tokens: 1000,
+        max_tokens: 2000,
         n: 1,
         stop: null,
         temperature: 1.0, //higher temp gives a more creative and diverse output

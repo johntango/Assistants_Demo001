@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 //
 // Run 
 app.post('/run_assistant', async (req, res) => {
-    let name = "strategy";  // we could get this from req.body
+    let name = req.body.assistant_name;
     let instructions = req.body.message;
     if(tools.length < 2){
     //tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
@@ -80,7 +80,7 @@ async function create_or_get_assistant(name,instructions){
     for(obj in response.data){
         assistant = response.data[obj];
         // change assistant.name to small letters
-        if(assistant.name.toLowerCase() == name){
+        if(assistant.name.toLowerCase() == name.toLowerCase()){
             focus.assistant_id = assistant.id;
             tools = assistant.tools;  // get the tool
             break
@@ -135,7 +135,7 @@ app.post('/create_assistant', async (req, res) => {
     }
 }
 )
-
+// get assistant by name
 app.post('/get_assistant', async (req, res) => {
     let name = req.body.assistant_name;
     let instruction = "";
@@ -388,6 +388,7 @@ app.post('/run_status', async (req, res) => {
 // requires action is a special case where we need to call a function
 async function get_and_run_tool(response){
     let thread_id = focus.thread_id;
+    let run_id = focus.run_id;
     // extract function to be called from response
     const toolCalls = response.required_action.submit_tool_outputs.tool_calls;
     let toolOutputs = []
