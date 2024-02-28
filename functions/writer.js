@@ -1,7 +1,7 @@
 // this is the function that runs the writer assistant
-const OpenAI = require('openai');
-const fs = require('fs');
-const { get } = require('http');
+import OpenAI from 'openai';
+import fs from 'fs';
+import { get } from 'http';
 
 const execute = async (name, instructions) => {
 // this puts a message onto a thread and then runs the assistant on that thread
@@ -95,4 +95,4 @@ const details = {
     },
     "description": "This is a fiction writer that can write stories based on instructions"
   }
-module.exports = { execute, details };
+export { execute, details };

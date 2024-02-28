@@ -1,8 +1,8 @@
-const { PuppeteerWebBaseLoader } = require("langchain/document_loaders/web/puppeteer");
-const fs = require("fs");
-const path = require("path");
-const { URL } = require("url");
-const puppeteer = require("puppeteer");
+import { PuppeteerWebBaseLoader } from "langchain/document_loaders/web/puppeteer";
+import fs from "fs";
+import path from "path";
+import { URL } from "url";
+import puppeteer from "puppeteer";
 
 const execute = async (options) => {
   const url = options;
@@ -52,4 +52,4 @@ const details = {
   "description": "Scrape the HTML of a website"
 };
 
-module.exports = { execute, details };
+export { execute, details };

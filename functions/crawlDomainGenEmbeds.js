@@ -1,15 +1,15 @@
-const axios = require("axios");
-const csvParser = require("csv-parser");
-const createCsvWriter = require("csv-writer");
-const dotenv = require("dotenv");
-const fs = require("fs");
-//const { createRequire } = require( "module");
-const path = require("path");
-const { URL } = require("url");
-const { parse } = require("node-html-parser");
-const natural = require("natural");
-const WordTokenizer = natural.WordTokenizer;
-const { OpenAI } = require("openai");
+import axios from "axios";
+import csvParser from "csv-parser";
+import createCsvWriter from "csv-writer";
+import dotenv from "dotenv";
+import fs from "fs";
+//import { createRequire } from  "module";
+import path from "path";
+import { URL } from "url";
+import { parse } from "node-html-parser";
+import natural from "natural";
+//import WordTokenizer from "natural.WordTokenizer";
+import { OpenAI } from "openai";
 
 const MAXCOUNT = 10;
 const execute = async (domain, question) => {
@@ -507,5 +507,5 @@ const details = {
     },
     "description": "Given a domain or url to crawl, and a question to answer, it crawls the pages, generates tokens and embeddings, filters the most relevant page and answers the question"
 };
+export { execute, details };
 
-module.exports = { execute, details };

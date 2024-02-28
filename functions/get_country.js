@@ -1,6 +1,6 @@
-const { exec } = require("child_process");
-const fs = require( "fs");
-const path = require("path");
+import { exec } from "child_process";
+import fs from  "fs";
+import path from "path";
 
 const execute = async (name) => {
     const url = `https://api.nationalize.io?name=${name}`;
@@ -32,4 +32,4 @@ const details = {
     },
     "description": "Given a name, return the country of origin",
 };
-module.exports = { execute, details };
+export { execute, details };

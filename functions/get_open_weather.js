@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const execute = async (city) => {
   // get key from env. see https://home.openweathermap.org/api_keys
@@ -41,4 +41,4 @@ const details = {
 
 };
 
-module.exports = { execute, details };
+export { execute, details };

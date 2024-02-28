@@ -1,27 +1,27 @@
 
 
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
 const app = express();
 const port = 4000;
-const fs = require('fs');
-const axios = require('axios');
-const OpenAI = require('openai');
-const fileURLToPath = require("url");
-const bodyParser = require('body-parser');
+import fs from 'fs';
+import axios from 'axios';
+import OpenAI from 'openai';
+import fileURLToPath from 'url';
+import bodyParser from 'body-parser';
+import { get } from 'http';
+import { URL } from 'url';
 //const sqlite3 = require('sqlite3');
-
 
 let assistants = {}
 //let tools = [{ role:"function", type: "code_interpreter" }, { role:"function",type: "retrieval" }]
 let tools = [];
 //const get_weather = require('./functions/get_weather.js');
-const { get } = require('http');
-
-
+ 
 // Serve static images from the 'images' folder
-app.use(express.static(__dirname + '/images'));
-console.log("dirname: " + __dirname);
+const __dirname = new URL('.', import.meta.url).pathname;
+
+app.use(express.static(__dirname +'/images'));
 
 
 const openai = new OpenAI({
@@ -40,11 +40,11 @@ let focus = { assistant_id: "", assistant_name: "", file_id: "", thread_id: "", 
 // Middleware to parse JSON payloads in POST requests
 app.use(express.json());
 
-
-
 // Serve index.html at the root URL '/'
+//get the root directory
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/index.html'));
+    res.sendFile(path.join(__dirname, '/index.html')); 
 });
 //
 // Run 
@@ -77,7 +77,7 @@ async function create_or_get_assistant(name, instructions) {
     })
     // loop over all assistants and find the one with the name name
     let assistant = {};
-    for (obj in response.data) {
+    for (let obj in response.data) {
         assistant = response.data[obj];
         // change assistant.name to small letters
         if (assistant.name.toLowerCase() == name.toLowerCase()) {
@@ -311,7 +311,7 @@ app.post('/create_thread', async (req, res) => {
           ]*/
         )
 
-        message = response;
+        let message = response;
         console.log("create_thread response: " + JSON.stringify(response));
         focus.thread_id = response.id;
         res.status(200).json({ message: message, focus: focus });
@@ -344,10 +344,9 @@ app.post('/create_run', async (req, res) => {
         let response = await openai.beta.threads.runs.create(thread_id, {
             assistant_id: assistant_id
         })
-        message = await response;
         focus.run_id = response.id;
         console.log("create_run response: " + JSON.stringify(response));
-        res.status(200).json({ message: message, focus: focus });
+        res.status(200).json({ message: JSON.stringify(response), focus: focus });
     }
     catch (error) {
         console.log(error);
@@ -362,7 +361,7 @@ app.post('/run_status', async (req, res) => {
     let run_id = req.body.run_id;
     try {
         let response = await openai.beta.threads.runs.retrieve(thread_id, run_id)
-        message = response;
+        let message = response;
         focus.status = response.status;
         let tries = 0;
         while (response.status == 'in_progress' && tries < 10) {
@@ -395,7 +394,7 @@ async function get_and_run_tool(response) {
     let functions_available = await getFunctions();
     for (let toolCall of toolCalls) {
         console.log("toolCall: " + JSON.stringify(toolCall));
-        functionName = toolCall.function.name;
+        let functionName = toolCall.function.name;
         // get function from functions_available
         let functionToExecute = functions_available[`${functionName}`];
 
@@ -445,7 +444,7 @@ app.post('/create_message', async (req, res) => {
                 role: "user",
                 content: prompt,
             })
-        message = await response;
+        let message = await response;
         console.log("create message response: " + JSON.stringify(response));
         res.status(200).json({ message: message, focus: focus });
     }

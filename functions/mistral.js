@@ -1,10 +1,11 @@
 // this is the function that runs the writer assistant
-import MistralClient from '@mistralai/mistralai';
+//const Mistral = require('@mistralai/mistralai')
+import Mistral from '@mistralai/mistralai';
 
 const execute = async (prompt) => {
     const apiKey = process.env.MISTRAL_API_KEY;
 
-    const client = new MistralClient(apiKey);
+    const client = new Mistral(apiKey);
 
     const chatResponse = await client.chat({
     model: 'mistral-large-latest',
@@ -30,6 +31,6 @@ const details = {
     },
     "description": "This is the prompt for Mistral",
 };
-module.exports = { execute, details };
+export { execute, details };
 
 

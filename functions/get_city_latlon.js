@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const execute = async (city) => {
 
@@ -37,4 +37,4 @@ const details = {
   "description": "Given city get the lat, lon location",
 };
 
-module.exports = { execute, details };
+export { execute, details };
