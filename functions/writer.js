@@ -18,7 +18,7 @@ const execute = async (name, instructions) => {
         limit: 10,
     })
     // loop over all assistants and find the one with the name name
-    for(obj in response.data){
+    for(let obj in response.data){
         let assistant = response.data[obj];
         // change assistant.name to small letters
         if(assistant.name.toLowerCase() == name){

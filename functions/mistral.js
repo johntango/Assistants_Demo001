@@ -10,7 +10,7 @@ const execute = async (prompt) => {
     const chatResponse = await client.chat({
     model: 'mistral-large-latest',
     response_format: {'type': 'json_object'},
-    messages: [{role: 'user', content: 'What is the best French cheese? Return the product and produce location in JSON format'}],
+    messages: [{role: 'user', content: prompt}],
     });
     let message = chatResponse.choices[0].message.content;
     console.log('Chat:', chatResponse.choices[0].message.content);
