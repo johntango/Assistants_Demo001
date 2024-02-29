@@ -68,7 +68,7 @@ const execute = async (name, instructions) => {
         console.log(message.data[0].content[0].text.value)
         return;
     }
-    
+  
     await runAssistant(assistant_id, thread_id, instructions);
   
     return messages;

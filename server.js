@@ -11,6 +11,7 @@ import fileURLToPath from 'url';
 import bodyParser from 'body-parser';
 import { get } from 'http';
 import { URL } from 'url';
+//import { OpenAI } from "@langchain/openai"
 //const sqlite3 = require('sqlite3');
 
 let assistants = {}
@@ -73,7 +74,7 @@ app.post('/run_assistant', async (req, res) => {
 async function create_or_get_assistant(name, instructions) {
     const response = await openai.beta.assistants.list({
         order: "desc",
-        limit: 10,
+        limit: 20,
     })
     // loop over all assistants and find the one with the name name
     let assistant = {};
@@ -549,8 +550,43 @@ function addLastMessagetoArray(message, messages) {
         messages.push({ role, content });
     }
 }
+// Langchain version of Loop
+app.post('/loopLC', async (req, res) => {
+    let thread_id = focus.thread_id;
+    let writer = assistants.Writer;
+    let critic = assistants.Critic;
+    let messages = [];
+    try {
+        // Create a LangChain instance
+        const chain = new LangChain();
 
+        // Run the Writer Assistant to create a first draft
+        chain.addAssistant(writer.id);
+        chain.addInstruction("Write a paragraph about a king and his gaudy clothes");
+        await chain.run(thread_id);
+        await get_run_status(thread_id, focus.run_id, messages);
 
+        // Run the Critic Assistant to provide feedback
+        chain.addAssistant(critic.id);
+        chain.addInstruction("Provide constructive feedback to what the Writer assistant has written");
+        await chain.run(thread_id);
+        await get_run_status(thread_id, focus.run_id, messages);
+
+        // Have the Writer Assistant rewrite the first chapter based on the feedback from the Critic
+        chain.addAssistant(writer.id);
+        chain.addInstruction(`Using the feedback from the Critic Assistant rewrite the first chapter given here: ${messages[0]}`);
+        await chain.run(thread_id);
+        await get_run_status(thread_id, focus.run_id, messages);
+
+        // create one message with all the messages input to the thread
+        let textMessage = messages.join("\n");
+
+        res.status(200).json({ message: JSON.stringify(textMessage), focus: focus });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "An error occurred" });
+    }
+});
 
 app.post('/loop', async (req, res) => {
     let thread_id = focus.thread_id;
@@ -583,6 +619,11 @@ app.post('/loop', async (req, res) => {
 // some code that might be useful
 //messages.append({"role": "tool", "tool_call_id": assistant_message["tool_calls"][0]['id'], "name": assistant_message["tool_calls"][0]["function"]["name"], "content": results})
 
+async function get_tools(assistant_id) {
+    let response = await openai.beta.assistants.retrieve(assistant_id);
+    let tools = response.tools;
+    return tools;
+}
 
 app.post('/list_tools', async (req, res) => {
     let assistant_id = focus.assistant_id;
@@ -614,20 +655,33 @@ app.post('/list_tools', async (req, res) => {
 */
     let local_tools = [];
     //local_tools.push(mytool);
+    let tools = await get_tools(assistant_id);
 
-    keys = Object.keys(functions);
+    let keys = Object.keys(functions);
     for (let key of keys) {
         let details = functions[key].details;
-        local_tools.push({ "type": "function", "function": details })
+        // check if the function is already in the tools
+        let found = false;
+        for (let tool of tools) {
+            if (tool.function.name == key) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            local_tools.push({ "type": "function", "function": details })
+        }
     }
 
     // add the tools to the assistant if they are not already there
-
-    const response = await openai.beta.assistants.update(
-        assistant_id,
-        { "tools": local_tools }
-    )
-    console.log("assistant with tools updated: " + JSON.stringify(response));
+    if (local_tools.length > 0) {
+        const response = await openai.beta.assistants.update(
+            assistant_id,
+            { "tools": local_tools }
+        )
+        console.log("assistant with tools updated: " + JSON.stringify(response));
+    }
+  
     //focus.func_name = "crawlDomainGenEmbeds";
     res.status(200).json({ message: JSON.stringify(response), focus: focus });
 })
