@@ -639,10 +639,11 @@ async function getFunctions() {
         if (file.endsWith(".js")) {
             const moduleName = file.slice(0, -3);
             const modulePath = `./functions/${moduleName}.js`;
-            const { details } = await import(modulePath);
+            const { details, execute } = await import(modulePath);
 
             openAIFunctions[moduleName] = {
-                "details": details
+                "details": details,
+                "execute": execute
             };
         }
     }
