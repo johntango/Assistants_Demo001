@@ -52,6 +52,9 @@ app.get('/', (req, res) => {
 app.post('/run_assistant', async (req, res) => {
     let name = req.body.assistant_name;
     let instructions = req.body.message;
+    if (instructions == "") {
+        instructions = "You are a helpful assistant."
+    }
     if (tools.length < 2) {
         //tools = [{ type: "code_interpreter" }, { type: "retrieval" }]
     }
@@ -62,13 +65,13 @@ app.post('/run_assistant', async (req, res) => {
         apiKey: process.env.OPENAI_API_KEY,
     });
     let assistant = await create_or_get_assistant(name);
-    let thread = await create_or_get_thread()
+    let thread = await create_thread()
 
     focus.assistant_id = assistant.id;
     focus.thread_id = thread.id;
     focus.assistant_name = assistant.name;
     messages = await runAssistant(focus.assistant_id, focus.thread_id, instructions);
-    res.status(200).json({ message: messages, focus: focus });
+    res.status(200).json({ message: JSON.stringify(messages), focus: focus });
 });
 
 async function create_or_get_assistant(name, instructions) {
@@ -99,11 +102,11 @@ async function create_or_get_assistant(name, instructions) {
     }
     return assistant;
 }
-async function create_or_get_thread() {
-    let response = {}
-    if (focus.thread_id == "") {
+// create a new thread
+
+async function create_thread() {
         // do we need an intitial system message on the thread?
-        response = await openai.beta.threads.create(
+    let response = await openai.beta.threads.create(
             /*messages=[
             {
               "role": "user",
@@ -112,11 +115,9 @@ async function create_or_get_thread() {
             }
           ]*/
         )
-        focus.thread_id = response.id;
-    }
+    focus.thread_id = response.id;
     return response;
 }
-
 
 // Define routes
 app.post('/create_assistant', async (req, res) => {
@@ -497,7 +498,7 @@ async function runAssistant(assistant_id, thread_id, user_instructions) {
         let run = await openai.beta.threads.runs.create(thread_id, {
             assistant_id: assistant_id
         })
-        run_id = run.id;
+        let run_id = run.id;
         focus.run_id = run_id;
         focus.assistant_id = assistant_id;
         focus.thread_id = thread_id;
